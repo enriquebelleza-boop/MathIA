@@ -1,0 +1,1421 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>MathAI — Tu tutor inteligente</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --p:#4f3ff0;--p2:#7c6ff7;--p3:#c5bffb;--p4:#f0eeff;
+  --teal:#0fb8a4;--teal2:#d0f5f1;
+  --amber:#f0a500;--amber2:#fff4d6;
+  --red:#e84c4c;--red2:#fdeaea;
+  --green:#1ab87a;--green2:#d4f5e8;
+  --dark:#0f0c26;--dark2:#1a1640;--dark3:#252060;
+  --gray:#6b6b8a;--gray2:#e8e7f4;--gray3:#f5f4ff;
+  --white:#ffffff;
+  --radius:14px;--radius-sm:8px;--radius-lg:20px;
+  --shadow:0 4px 24px rgba(79,63,240,.10);
+  --font:'Sora',sans-serif;--mono:'Space Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;font-family:var(--font);background:var(--gray3);color:var(--dark);}
+
+/* LAYOUT */
+.app{display:flex;height:100vh;overflow:hidden;}
+.sidebar{width:220px;background:var(--dark);display:flex;flex-direction:column;flex-shrink:0;transition:width .3s;}
+.sidebar.collapsed{width:68px;}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.topbar{height:60px;background:var(--white);border-bottom:1px solid var(--gray2);display:flex;align-items:center;padding:0 24px;gap:16px;flex-shrink:0;}
+.content{flex:1;overflow-y:auto;padding:24px;}
+
+/* SCREENS */
+.screen{display:none;animation:fadeIn .25s ease;}
+.screen.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* LOGIN */
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--dark);position:relative;overflow:hidden;}
+.login-bg{position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 60% 40%,#2a1f6e 0%,transparent 70%),radial-gradient(ellipse 50% 40% at 20% 80%,#0f3d38 0%,transparent 60%);}
+.login-card{position:relative;background:rgba(255,255,255,.06);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.12);border-radius:24px;padding:40px 44px;width:440px;max-width:95vw;}
+.login-logo{display:flex;align-items:center;gap:12px;margin-bottom:32px;}
+.logo-icon{width:44px;height:44px;background:var(--p);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff;font-family:var(--mono);font-weight:700;}
+.login-title{font-size:22px;font-weight:700;color:#fff;}
+.login-sub{font-size:13px;color:rgba(255,255,255,.55);margin-top:2px;}
+.role-tabs{display:flex;gap:8px;margin-bottom:24px;}
+.role-tab{flex:1;padding:10px;border-radius:var(--radius-sm);border:1.5px solid rgba(255,255,255,.15);background:transparent;color:rgba(255,255,255,.5);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);transition:all .2s;}
+.role-tab.active{background:var(--p);border-color:var(--p);color:#fff;}
+.inp-group{margin-bottom:16px;}
+.inp-label{font-size:12px;color:rgba(255,255,255,.5);margin-bottom:6px;}
+.inp{width:100%;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:var(--radius-sm);padding:11px 14px;color:#fff;font-size:14px;font-family:var(--font);outline:none;transition:border-color .2s;}
+.inp:focus{border-color:var(--p2);}
+.inp::placeholder{color:rgba(255,255,255,.3);}
+.btn-login{width:100%;padding:13px;background:var(--p);border:none;border-radius:var(--radius-sm);color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font);margin-top:4px;transition:background .2s;}
+.btn-login:hover{background:var(--p2);}
+.login-divider{text-align:center;color:rgba(255,255,255,.3);font-size:12px;margin:16px 0;}
+.social-btns{display:flex;gap:8px;}
+.social-btn{flex:1;padding:9px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:var(--radius-sm);color:rgba(255,255,255,.7);font-size:12px;cursor:pointer;font-family:var(--font);transition:all .2s;}
+.social-btn:hover{background:rgba(255,255,255,.12);}
+
+/* SIDEBAR NAV */
+.sb-header{padding:20px 16px;border-bottom:1px solid rgba(255,255,255,.06);}
+.sb-brand{display:flex;align-items:center;gap:10px;color:#fff;font-size:16px;font-weight:700;white-space:nowrap;overflow:hidden;}
+.sb-brand .icon{width:36px;height:36px;background:var(--p);border-radius:10px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:700;font-size:14px;color:#fff;flex-shrink:0;}
+.sb-nav{flex:1;padding:12px 8px;overflow-y:auto;}
+.sb-section{font-size:10px;font-weight:700;color:rgba(255,255,255,.25);letter-spacing:.1em;padding:16px 8px 6px;text-transform:uppercase;white-space:nowrap;overflow:hidden;}
+.sb-item{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;cursor:pointer;color:rgba(255,255,255,.5);font-size:13px;font-weight:500;margin-bottom:2px;transition:all .2s;white-space:nowrap;overflow:hidden;}
+.sb-item:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.85);}
+.sb-item.active{background:rgba(79,63,240,.25);color:#fff;}
+.sb-item .ic{width:20px;height:20px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px;}
+.sb-footer{padding:12px 8px;border-top:1px solid rgba(255,255,255,.06);}
+.sb-user{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;overflow:hidden;}
+.sb-avatar{width:32px;height:32px;border-radius:50%;background:var(--p);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0;}
+.sb-uname{font-size:13px;font-weight:600;color:#fff;white-space:nowrap;}
+.sb-urole{font-size:11px;color:rgba(255,255,255,.4);white-space:nowrap;}
+
+/* TOPBAR */
+.tb-title{font-size:16px;font-weight:700;flex:1;}
+.tb-badge{display:flex;align-items:center;gap:6px;background:var(--amber2);color:var(--amber);padding:5px 12px;border-radius:99px;font-size:12px;font-weight:600;}
+.tb-flame{font-size:14px;}
+.tb-pts{font-size:13px;font-weight:700;color:var(--p);}
+.tb-notif{width:36px;height:36px;border-radius:50%;border:none;background:var(--gray2);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;}
+.tb-ava{width:36px;height:36px;border-radius:50%;background:var(--p);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;cursor:pointer;}
+
+/* CARDS */
+.card{background:var(--white);border-radius:var(--radius);padding:20px;border:1px solid var(--gray2);}
+.card-title{font-size:14px;font-weight:700;margin-bottom:14px;color:var(--dark);}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;}
+
+/* METRIC CARDS */
+.met-card{background:var(--white);border-radius:var(--radius);padding:18px;border:1px solid var(--gray2);}
+.met-label{font-size:12px;color:var(--gray);margin-bottom:6px;}
+.met-val{font-size:26px;font-weight:700;color:var(--dark);}
+.met-sub{font-size:11px;color:var(--gray);margin-top:4px;}
+
+/* BADGES */
+.badge{display:inline-block;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;}
+.badge-p{background:var(--p4);color:var(--p);}
+.badge-t{background:var(--teal2);color:#0a8f7e;}
+.badge-a{background:var(--amber2);color:#b37a00;}
+.badge-g{background:var(--green2);color:#0f8a57;}
+.badge-r{background:var(--red2);color:var(--red);}
+.badge-live{background:#ffe0e0;color:var(--red);display:inline-flex;align-items:center;gap:4px;}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--red);animation:blink 1s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* PROGRESS */
+.pbar{height:6px;background:var(--gray2);border-radius:99px;overflow:hidden;}
+.pfill{height:100%;border-radius:99px;background:var(--p);transition:width .6s ease;}
+.pfill-g{background:var(--green);}
+.pfill-a{background:var(--amber);}
+.pfill-r{background:var(--red);}
+
+/* BUTTONS */
+.btn{padding:9px 18px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);border:none;transition:all .2s;}
+.btn-primary{background:var(--p);color:#fff;}
+.btn-primary:hover{background:var(--p2);}
+.btn-outline{background:transparent;border:1.5px solid var(--p);color:var(--p);}
+.btn-outline:hover{background:var(--p4);}
+.btn-sm{padding:6px 12px;font-size:12px;}
+.btn-danger{background:var(--red);color:#fff;}
+.btn-success{background:var(--green);color:#fff;}
+
+/* STUDENT HOME */
+.hero-card{background:linear-gradient(135deg,var(--dark) 0%,var(--dark3) 100%);border-radius:var(--radius-lg);padding:28px;color:#fff;position:relative;overflow:hidden;margin-bottom:20px;}
+.hero-card::before{content:'';position:absolute;top:-40px;right:-40px;width:200px;height:200px;background:rgba(79,63,240,.3);border-radius:50%;}
+.hero-card::after{content:'';position:absolute;bottom:-60px;right:60px;width:150px;height:150px;background:rgba(15,184,164,.2);border-radius:50%;}
+.hero-greeting{font-size:22px;font-weight:700;margin-bottom:4px;}
+.hero-sub{font-size:13px;opacity:.65;margin-bottom:20px;}
+.hero-stats{display:flex;gap:20px;}
+.hstat{text-align:center;}
+.hstat-val{font-size:24px;font-weight:700;}
+.hstat-lab{font-size:11px;opacity:.6;margin-top:2px;}
+
+/* COURSE CARDS */
+.course-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;}
+.course-card{background:var(--white);border-radius:var(--radius);padding:18px;border:1px solid var(--gray2);cursor:pointer;transition:all .2s;}
+.course-card:hover{border-color:var(--p3);transform:translateY(-2px);}
+.course-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:12px;font-family:var(--mono);font-weight:700;}
+.course-name{font-size:14px;font-weight:700;margin-bottom:4px;}
+.course-level{font-size:12px;color:var(--gray);margin-bottom:10px;}
+
+/* EXERCISE */
+.ex-card{background:var(--white);border-radius:var(--radius-lg);padding:28px;border:1px solid var(--gray2);}
+.ex-question{background:var(--p4);border-radius:var(--radius);padding:20px;text-align:center;margin-bottom:20px;}
+.ex-formula{font-family:var(--mono);font-size:20px;font-weight:700;color:var(--p);margin-bottom:8px;}
+.ex-prompt{font-size:13px;color:var(--gray);}
+.option-btn{width:100%;text-align:left;padding:12px 16px;border:1.5px solid var(--gray2);border-radius:var(--radius-sm);background:var(--white);font-size:13px;font-weight:500;cursor:pointer;font-family:var(--font);margin-bottom:8px;transition:all .2s;}
+.option-btn:hover{border-color:var(--p3);background:var(--p4);}
+.option-btn.correct{border-color:var(--green);background:var(--green2);color:#0f6840;}
+.option-btn.wrong{border-color:var(--red);background:var(--red2);color:#a13030;}
+.hint-box{background:var(--p4);border-left:3px solid var(--p);border-radius:0 var(--radius-sm) var(--radius-sm) 0;padding:12px 16px;font-size:13px;color:var(--p);line-height:1.6;}
+
+/* CANVAS VR */
+.vr-canvas{width:100%;border-radius:var(--radius);overflow:hidden;background:#0a0820;position:relative;}
+.vr-hud{position:absolute;top:12px;left:12px;background:rgba(79,63,240,.85);color:#fff;font-size:11px;padding:4px 12px;border-radius:99px;font-weight:600;}
+.vr-hud-r{position:absolute;top:12px;right:12px;display:flex;flex-direction:column;gap:5px;align-items:flex-end;}
+.vr-chip{background:rgba(10,8,32,.82);color:#c5bffb;font-size:10px;padding:4px 10px;border-radius:99px;border:1px solid rgba(79,63,240,.4);}
+
+/* CHAT */
+.chat-wrap{display:flex;flex-direction:column;height:380px;}
+.chat-msgs{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px;}
+.msg-ai{background:var(--p4);border-radius:0 12px 12px 12px;padding:10px 14px;font-size:13px;color:var(--dark);line-height:1.6;max-width:85%;align-self:flex-start;}
+.msg-user{background:var(--p);border-radius:12px 12px 0 12px;padding:10px 14px;font-size:13px;color:#fff;line-height:1.6;max-width:85%;align-self:flex-end;}
+.chat-input-row{display:flex;gap:8px;padding:10px;border-top:1px solid var(--gray2);}
+.chat-inp{flex:1;border:1.5px solid var(--gray2);border-radius:var(--radius-sm);padding:9px 12px;font-size:13px;font-family:var(--font);outline:none;}
+.chat-inp:focus{border-color:var(--p3);}
+.chat-send{background:var(--p);border:none;border-radius:var(--radius-sm);padding:9px 16px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);}
+.chip-row{display:flex;gap:6px;flex-wrap:wrap;padding:0 10px 8px;}
+.chip-btn{background:var(--gray2);border:none;border-radius:99px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);color:var(--dark);transition:all .2s;}
+.chip-btn:hover{background:var(--p4);color:var(--p);}
+
+/* GAMIFICATION */
+.xp-bar-wrap{background:var(--dark);border-radius:var(--radius-lg);padding:24px;color:#fff;}
+.level-badge{width:64px;height:64px;border-radius:50%;background:var(--p);display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;font-family:var(--mono);margin:0 auto 12px;}
+.medals-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+.medal{text-align:center;padding:12px 8px;border-radius:var(--radius-sm);}
+.medal-icon{font-size:28px;margin-bottom:4px;}
+.medal-name{font-size:11px;color:var(--gray);}
+.medal.locked{opacity:.35;filter:grayscale(1);}
+.streak-row{display:flex;gap:6px;}
+.streak-day{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;}
+.streak-done{background:var(--amber);color:#fff;}
+.streak-today{background:var(--p);color:#fff;}
+.streak-empty{background:var(--gray2);color:var(--gray);}
+
+/* DOCENTE DASHBOARD */
+.dash-scene{background:var(--dark);border-radius:var(--radius);padding:20px;color:#fff;}
+.student-row-d{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--gray2);}
+.student-row-d:last-child{border:none;}
+.s-ava{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;}
+.alert-item{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--gray2);}
+.alert-item:last-child{border:none;}
+.alert-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px;}
+
+/* UPLOAD */
+.upload-zone{border:2px dashed var(--p3);border-radius:var(--radius);padding:32px;text-align:center;cursor:pointer;transition:all .2s;}
+.upload-zone:hover{border-color:var(--p);background:var(--p4);}
+.upload-icon{font-size:36px;margin-bottom:10px;}
+.upload-text{font-size:14px;font-weight:600;color:var(--dark);margin-bottom:4px;}
+.upload-sub{font-size:12px;color:var(--gray);}
+.file-list{display:flex;flex-direction:column;gap:8px;margin-top:16px;}
+.file-item{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--gray3);border-radius:var(--radius-sm);}
+.file-ext{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;}
+
+/* TEACHER VR */
+.vr-teacher-wrap{background:var(--dark);border-radius:var(--radius-lg);padding:0;overflow:hidden;}
+.avatar-dot{width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;border:2px solid;}
+.tool-card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:var(--radius-sm);padding:10px 12px;cursor:pointer;transition:all .2s;font-size:12px;color:rgba(255,255,255,.7);}
+.tool-card:hover,.tool-card.on{background:rgba(79,63,240,.25);border-color:var(--p2);color:#fff;}
+.tool-card-title{font-weight:600;margin-bottom:2px;}
+.tool-card-sub{font-size:11px;opacity:.65;}
+
+/* MODAL-LIKE OVERLAY (no fixed!) */
+.overlay-wrap{min-height:500px;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;border-radius:var(--radius-lg);}
+.modal{background:var(--white);border-radius:var(--radius-lg);padding:32px;width:460px;max-width:95%;}
+
+/* CHART BARS */
+.bar-group{display:flex;flex-direction:column;gap:10px;}
+.bar-row{display:flex;align-items:center;gap:10px;}
+.bar-label{font-size:12px;color:var(--gray);width:110px;flex-shrink:0;}
+.bar-track{flex:1;height:10px;background:var(--gray2);border-radius:99px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:99px;transition:width .6s ease;}
+.bar-val{font-size:12px;color:var(--dark);font-weight:600;width:32px;text-align:right;}
+
+/* DONUT */
+.donut-wrap{display:flex;align-items:center;gap:20px;}
+.donut-legend{display:flex;flex-direction:column;gap:8px;}
+.donut-leg-item{display:flex;align-items:center;gap:8px;font-size:12px;}
+.donut-leg-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .sidebar{width:68px;}
+  .sb-brand span,.sb-item span,.sb-uname,.sb-urole,.sb-section{display:none;}
+  .grid-4{grid-template-columns:1fr 1fr;}
+  .grid-3{grid-template-columns:1fr 1fr;}
+}
+
+/* TABS */
+.tab-row{display:flex;gap:4px;margin-bottom:20px;background:var(--gray2);border-radius:var(--radius-sm);padding:4px;}
+.tab{flex:1;padding:8px;border-radius:6px;text-align:center;font-size:13px;font-weight:600;cursor:pointer;color:var(--gray);border:none;background:transparent;font-family:var(--font);transition:all .2s;}
+.tab.on{background:var(--white);color:var(--dark);}
+.tab-content{display:none;}
+.tab-content.on{display:block;}
+
+/* ANIMATIONS */
+.pulse-ring{animation:pulsering 2s infinite;}
+@keyframes pulsering{0%,100%{box-shadow:0 0 0 0 rgba(79,63,240,.4)}50%{box-shadow:0 0 0 8px rgba(79,63,240,0)}}
+
+/* NOTIFICATION */
+.notif{position:absolute;top:16px;right:16px;background:var(--green);color:#fff;padding:10px 18px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .3s;z-index:100;}
+.notif.show{opacity:1;}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--gray2);border-radius:99px;}
+</style>
+</head>
+<body>
+
+<!-- ===== LOGIN ===== -->
+<div id="login-page" style="display:block;">
+<div class="login-wrap">
+  <div class="login-bg"></div>
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="logo-icon">M∑</div>
+      <div><div class="login-title">MathAI</div><div style="font-size:12px;color:rgba(255,255,255,.45);margin-top:1px;">Tutor inteligente universitario</div></div>
+    </div>
+    <div class="role-tabs">
+      <button class="role-tab active" onclick="setRole('student',this)">Soy estudiante</button>
+      <button class="role-tab" onclick="setRole('teacher',this)">Soy docente</button>
+    </div>
+    <div class="inp-group">
+      <div class="inp-label">Correo universitario</div>
+      <input class="inp" type="email" placeholder="usuario@universidad.edu" value="ana.gomez@uni.edu"/>
+    </div>
+    <div class="inp-group">
+      <div class="inp-label">Contraseña</div>
+      <input class="inp" type="password" value="••••••••"/>
+    </div>
+    <button class="btn-login" onclick="doLogin()">Ingresar a MathAI</button>
+    <div class="login-divider">o continúa con</div>
+    <div class="social-btns">
+      <button class="social-btn" onclick="doLogin()">Google</button>
+      <button class="social-btn" onclick="doLogin()">Microsoft 365</button>
+    </div>
+    <div style="text-align:center;margin-top:16px;font-size:12px;color:rgba(255,255,255,.35);">¿No tienes cuenta? <span style="color:var(--p2);cursor:pointer;">Regístrate</span></div>
+  </div>
+</div>
+</div>
+
+<!-- ===== MAIN APP ===== -->
+<div id="main-app" class="app" style="display:none;">
+
+<!-- SIDEBAR -->
+<div class="sidebar" id="sidebar">
+  <div class="sb-header">
+    <div class="sb-brand">
+      <div class="icon">M∑</div>
+      <span>MathAI</span>
+    </div>
+  </div>
+  <div class="sb-nav" id="sb-nav"></div>
+  <div class="sb-footer">
+    <div class="sb-user">
+      <div class="sb-avatar" id="sb-ava">AG</div>
+      <div style="overflow:hidden;">
+        <div class="sb-uname" id="sb-uname">Ana Gómez</div>
+        <div class="sb-urole" id="sb-urole">Estudiante · Nivel 7</div>
+      </div>
+    </div>
+    <div class="sb-item" onclick="logout()" style="margin-top:4px;">
+      <div class="ic">⬡</div><span>Cerrar sesión</span>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <button onclick="toggleSidebar()" style="border:none;background:transparent;font-size:20px;cursor:pointer;padding:4px;">☰</button>
+    <div class="tb-title" id="tb-title">Inicio</div>
+    <div id="tb-gamif" style="display:flex;align-items:center;gap:10px;">
+      <div class="tb-badge"><span class="tb-flame">🔥</span> <span id="streak-count">5</span> días</div>
+      <div class="tb-pts" id="top-pts">1,240 XP</div>
+    </div>
+    <button class="tb-notif" id="notif-btn">🔔</button>
+    <div class="tb-ava" id="tb-ava" onclick="navigate('perfil')">AG</div>
+    <div class="notif" id="notif-toast"></div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content" id="app-content">
+
+    <!-- === STUDENT SCREENS === -->
+
+    <!-- S: HOME -->
+    <div class="screen active" id="sc-home">
+      <div class="hero-card">
+        <div style="position:relative;z-index:1;">
+          <div class="hero-greeting" id="hero-name">¡Hola, Ana! 👋</div>
+          <div class="hero-sub">Tienes 2 ejercicios pendientes hoy. ¡Mantén tu racha!</div>
+          <div class="hero-stats">
+            <div class="hstat"><div class="hstat-val">🔥 5</div><div class="hstat-lab">Racha</div></div>
+            <div class="hstat"><div class="hstat-val">1,240</div><div class="hstat-lab">XP total</div></div>
+            <div class="hstat"><div class="hstat-val">82%</div><div class="hstat-lab">Precisión</div></div>
+            <div class="hstat"><div class="hstat-val">Niv. 7</div><div class="hstat-lab">Cálculo I</div></div>
+          </div>
+        </div>
+      </div>
+      <div style="margin-bottom:16px;font-size:14px;font-weight:700;">Mis cursos</div>
+      <div class="course-grid" style="margin-bottom:24px;">
+        <div class="course-card" onclick="navigate('ejercicios')">
+          <div class="course-icon" style="background:var(--p4);color:var(--p);">∫</div>
+          <div class="course-name">Cálculo I</div>
+          <div class="course-level">Nivel 7 · 72% completado</div>
+          <div class="pbar"><div class="pfill" style="width:72%"></div></div>
+        </div>
+        <div class="course-card" onclick="navigate('ejercicios')">
+          <div class="course-icon" style="background:var(--teal2);color:var(--teal);">📊</div>
+          <div class="course-name">Contabilidad</div>
+          <div class="course-level">Nivel 4 · 40% completado</div>
+          <div class="pbar"><div class="pfill pfill-g" style="width:40%"></div></div>
+        </div>
+        <div class="course-card" onclick="navigate('ejercicios')">
+          <div class="course-icon" style="background:var(--amber2);color:var(--amber);">Σ</div>
+          <div class="course-name">Álgebra Lineal</div>
+          <div class="course-level">Nivel 5 · 55% completado</div>
+          <div class="pbar"><div class="pfill pfill-a" style="width:55%"></div></div>
+        </div>
+        <div class="course-card" style="border-style:dashed;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--gray);" onclick="showToast('Próximamente: agregar nuevo curso')">
+          <div style="font-size:28px;">+</div>
+          <div style="font-size:13px;font-weight:600;">Nuevo curso</div>
+        </div>
+      </div>
+      <div style="margin-bottom:16px;font-size:14px;font-weight:700;">Continuar donde lo dejé</div>
+      <div class="card" style="cursor:pointer;" onclick="navigate('ejercicios')">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
+          <div>
+            <div style="font-size:14px;font-weight:700;">Derivadas — Regla de la cadena</div>
+            <div style="font-size:12px;color:var(--gray);margin-top:3px;">Cálculo I · Tema 4 · Ejercicio 3/8</div>
+          </div>
+          <span class="badge badge-a">+50 XP</span>
+        </div>
+        <div class="pbar"><div class="pfill" style="width:45%"></div></div>
+        <div style="font-size:11px;color:var(--gray);margin-top:5px;">45% completado · ~12 minutos para terminar</div>
+      </div>
+    </div>
+
+    <!-- S: EJERCICIOS -->
+    <div class="screen" id="sc-ejercicios">
+      <div class="grid-2" style="margin-bottom:20px;">
+        <div class="ex-card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <div>
+              <div style="font-size:14px;font-weight:700;">Regla de la cadena</div>
+              <div style="font-size:12px;color:var(--gray);">Cálculo I · Ejercicio 3 de 8</div>
+            </div>
+            <span class="badge badge-p">+50 XP</span>
+          </div>
+          <div style="height:4px;background:var(--gray2);border-radius:99px;overflow:hidden;margin-bottom:16px;">
+            <div style="width:60%;height:100%;background:var(--p);border-radius:99px;"></div>
+          </div>
+          <div class="ex-question">
+            <div class="ex-formula">f(x) = (3x² + 2)⁵</div>
+            <div class="ex-prompt">Encuentra f'(x) usando la regla de la cadena</div>
+          </div>
+          <div id="ex-options">
+            <button class="option-btn" onclick="checkEx('a')">A) f'(x) = 5(3x² + 2)⁴</button>
+            <button class="option-btn" onclick="checkEx('b')">B) f'(x) = 5(3x² + 2)⁴ · 6x</button>
+            <button class="option-btn" onclick="checkEx('c')">C) f'(x) = 30x(3x² + 2)⁵</button>
+            <button class="option-btn" onclick="checkEx('d')">D) f'(x) = 6x · (3x² + 2)</button>
+          </div>
+          <div id="ex-feedback" style="display:none;margin-top:10px;padding:12px 14px;border-radius:var(--radius-sm);font-size:13px;line-height:1.6;"></div>
+          <div class="hint-box" style="margin-top:12px;">
+            <strong>💡 Pista IA:</strong> Recuerda: d/dx[f(g(x))] = f'(g(x)) · g'(x). Identifica la función externa e interna primero.
+          </div>
+          <div style="display:flex;gap:8px;margin-top:14px;">
+            <button class="btn btn-outline btn-sm" onclick="navigate('chat-ia')">Preguntar al tutor</button>
+            <button class="btn btn-outline btn-sm" onclick="navigate('lab-vr')">Abrir en VR</button>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px;">
+          <div class="card">
+            <div class="card-title">Visualizador 3D</div>
+            <div class="vr-canvas" style="height:200px;">
+              <canvas id="ex-canvas" width="400" height="200"></canvas>
+              <div class="vr-hud">f(x) = x²</div>
+              <div class="vr-hud-r">
+                <div class="vr-chip" id="ex-slope">f'(1) = 2</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:10px;align-items:center;">
+              <span style="font-size:12px;color:var(--gray);">Punto x:</span>
+              <input type="range" min="-3" max="3" value="1" step="1" id="ex-slider" oninput="updateExCanvas()" style="flex:1;"/>
+              <span id="ex-x-val" style="font-size:12px;font-weight:700;width:16px;">1</span>
+            </div>
+            <div style="display:flex;gap:6px;margin-top:8px;">
+              <button class="btn btn-outline btn-sm" id="tb-tang" onclick="toggleTang(this)">Tangente</button>
+              <button class="btn btn-outline btn-sm" id="tb-area" onclick="toggleArea(this)">Integral</button>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Próximos ejercicios</div>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--gray2);">
+                <div style="font-size:13px;">Derivada de producto</div>
+                <span class="badge badge-p">Siguiente</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--gray2);">
+                <div style="font-size:13px;color:var(--gray);">Derivada implícita</div>
+                <span class="badge" style="background:var(--gray2);color:var(--gray);">Bloqueado</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;">
+                <div style="font-size:13px;color:var(--gray);">Optimización</div>
+                <span class="badge" style="background:var(--gray2);color:var(--gray);">Bloqueado</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- S: CHAT IA -->
+    <div class="screen" id="sc-chat-ia">
+      <div class="grid-2">
+        <div class="card" style="padding:0;overflow:hidden;">
+          <div style="background:var(--dark);padding:14px 16px;display:flex;align-items:center;gap:10px;">
+            <div style="width:36px;height:36px;border-radius:50%;background:var(--p);display:flex;align-items:center;justify-content:center;font-size:18px;">🤖</div>
+            <div><div style="font-size:14px;font-weight:700;color:#fff;">Tutor IA</div><div style="font-size:11px;color:rgba(255,255,255,.5);">En línea · responde en segundos</div></div>
+            <div class="badge badge-live" style="margin-left:auto;"><span class="live-dot"></span>Live</div>
+          </div>
+          <div class="chat-wrap">
+            <div class="chat-msgs" id="chat-msgs">
+              <div class="msg-ai">¡Hola Ana! Soy tu tutor IA de MathAI. ¿Sobre qué tema tienes dudas hoy?</div>
+              <div class="msg-user">No entiendo bien la regla de la cadena</div>
+              <div class="msg-ai">Perfecto, te lo explico paso a paso.<br><br>La regla de la cadena se usa cuando tienes una <strong>función compuesta</strong>, es decir, una función dentro de otra.<br><br><em>Fórmula:</em> d/dx[f(g(x))] = f'(g(x)) · g'(x)<br><br>Ejemplo con f(x) = (3x²+2)⁵:<br>• Función externa: u⁵<br>• Función interna: u = 3x²+2<br><br>¿Quieres que veamos el paso a paso completo?</div>
+            </div>
+            <div class="chip-row">
+              <button class="chip-btn" onclick="chatSend('Sí, muéstrame el paso a paso')">Paso a paso</button>
+              <button class="chip-btn" onclick="chatSend('Dame otro ejemplo')">Otro ejemplo</button>
+              <button class="chip-btn" onclick="chatSend('Quiero practicar ahora')">Practicar</button>
+            </div>
+            <div class="chat-input-row">
+              <input class="chat-inp" id="chat-inp" placeholder="Escribe tu pregunta..." onkeydown="if(event.key==='Enter')chatSend()"/>
+              <button class="chat-send" onclick="chatSend()">→</button>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px;">
+          <div class="card">
+            <div class="card-title">Temas frecuentes</div>
+            <div style="display:flex;flex-direction:column;gap:6px;">
+              <button class="btn btn-outline btn-sm" style="text-align:left;width:100%;" onclick="chatSend('Explícame la regla de la cadena')">Regla de la cadena</button>
+              <button class="btn btn-outline btn-sm" style="text-align:left;width:100%;" onclick="chatSend('¿Cómo calculo un límite?')">Cálculo de límites</button>
+              <button class="btn btn-outline btn-sm" style="text-align:left;width:100%;" onclick="chatSend('Explícame el balance general')">Balance general</button>
+              <button class="btn btn-outline btn-sm" style="text-align:left;width:100%;" onclick="chatSend('¿Qué es la partida doble?')">Partida doble</button>
+              <button class="btn btn-outline btn-sm" style="text-align:left;width:100%;" onclick="chatSend('¿Cómo multiplico matrices?')">Multiplicación de matrices</button>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Capacidades del tutor IA</div>
+            <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;line-height:1.6;">
+              <div style="display:flex;gap:8px;"><span style="color:var(--green);">✓</span><span>Explica paso a paso cualquier ejercicio</span></div>
+              <div style="display:flex;gap:8px;"><span style="color:var(--green);">✓</span><span>Detecta y corrige tus errores</span></div>
+              <div style="display:flex;gap:8px;"><span style="color:var(--green);">✓</span><span>Genera ejercicios según tu nivel</span></div>
+              <div style="display:flex;gap:8px;"><span style="color:var(--green);">✓</span><span>Adapta la dificultad automáticamente</span></div>
+              <div style="display:flex;gap:8px;"><span style="color:var(--green);">✓</span><span>Responde en lenguaje natural</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- S: RECOMPENSAS -->
+    <div class="screen" id="sc-recompensas">
+      <div class="grid-2">
+        <div>
+          <div class="xp-bar-wrap" style="margin-bottom:16px;">
+            <div style="text-align:center;margin-bottom:16px;">
+              <div class="level-badge">7</div>
+              <div style="font-size:16px;font-weight:700;color:#fff;">Nivel 7 — Explorador</div>
+              <div style="font-size:12px;color:rgba(255,255,255,.5);margin-top:4px;">720 / 1000 XP para nivel 8</div>
+            </div>
+            <div style="height:8px;background:rgba(255,255,255,.1);border-radius:99px;overflow:hidden;margin-bottom:20px;">
+              <div style="width:72%;height:100%;background:var(--p2);border-radius:99px;"></div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;text-align:center;">
+              <div><div style="font-size:22px;font-weight:700;color:#fff;">47</div><div style="font-size:11px;color:rgba(255,255,255,.5);">Ejercicios</div></div>
+              <div><div style="font-size:22px;font-weight:700;color:#fff;">82%</div><div style="font-size:11px;color:rgba(255,255,255,.5);">Precisión</div></div>
+              <div><div style="font-size:22px;font-weight:700;color:#fff;">🔥5</div><div style="font-size:11px;color:rgba(255,255,255,.5);">Racha</div></div>
+            </div>
+          </div>
+          <div class="card" style="margin-bottom:16px;">
+            <div class="card-title">Racha semanal</div>
+            <div class="streak-row">
+              <div class="streak-day streak-done">L</div>
+              <div class="streak-day streak-done">M</div>
+              <div class="streak-day streak-done">X</div>
+              <div class="streak-day streak-done">J</div>
+              <div class="streak-day streak-today">V</div>
+              <div class="streak-day streak-empty">S</div>
+              <div class="streak-day streak-empty">D</div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Progreso por curso</div>
+            <div class="bar-group">
+              <div class="bar-row"><span class="bar-label">Cálculo I</span><div class="bar-track"><div class="bar-fill" style="width:72%;background:var(--p);"></div></div><span class="bar-val">72%</span></div>
+              <div class="bar-row"><span class="bar-label">Contabilidad</span><div class="bar-track"><div class="bar-fill" style="width:40%;background:var(--teal);"></div></div><span class="bar-val">40%</span></div>
+              <div class="bar-row"><span class="bar-label">Álgebra</span><div class="bar-track"><div class="bar-fill" style="width:55%;background:var(--amber);"></div></div><span class="bar-val">55%</span></div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="card">
+            <div class="card-title">Medallas y logros</div>
+            <div class="medals-grid">
+              <div class="medal"><div class="medal-icon">🏅</div><div class="medal-name">Primera racha</div></div>
+              <div class="medal"><div class="medal-icon">⭐</div><div class="medal-name">10 ejercicios</div></div>
+              <div class="medal"><div class="medal-icon">🎯</div><div class="medal-name">Precisión 80%</div></div>
+              <div class="medal"><div class="medal-icon">🔥</div><div class="medal-name">Racha de 5</div></div>
+              <div class="medal locked"><div class="medal-icon">🏆</div><div class="medal-name">Racha de 30</div></div>
+              <div class="medal locked"><div class="medal-icon">💎</div><div class="medal-name">100 ejercicios</div></div>
+              <div class="medal locked"><div class="medal-icon">🚀</div><div class="medal-name">Nivel 10</div></div>
+              <div class="medal locked"><div class="medal-icon">👑</div><div class="medal-name">Top del curso</div></div>
+            </div>
+          </div>
+          <div class="card" style="margin-top:14px;">
+            <div class="card-title">Ranking del curso</div>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <div style="display:flex;align-items:center;gap:10px;padding:8px;background:var(--p4);border-radius:var(--radius-sm);">
+                <span style="font-weight:700;color:var(--p);width:20px;">1</span>
+                <div class="s-ava" style="background:var(--teal2);color:var(--teal);">DR</div>
+                <div style="flex:1;font-size:13px;font-weight:600;">Diego Ríos</div>
+                <span style="font-size:12px;font-weight:700;color:var(--p);">1,480 XP</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;padding:8px;background:var(--amber2);border-radius:var(--radius-sm);">
+                <span style="font-weight:700;color:var(--amber);width:20px;">2</span>
+                <div class="s-ava" style="background:var(--p4);color:var(--p);">AG</div>
+                <div style="flex:1;font-size:13px;font-weight:600;">Ana Gómez (tú)</div>
+                <span style="font-size:12px;font-weight:700;color:var(--amber);">1,240 XP</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;padding:8px;">
+                <span style="font-weight:700;color:var(--gray);width:20px;">3</span>
+                <div class="s-ava" style="background:var(--green2);color:var(--green);">JR</div>
+                <div style="flex:1;font-size:13px;">Julián Roca</div>
+                <span style="font-size:12px;color:var(--gray);">1,120 XP</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- S: LAB VR -->
+    <div class="screen" id="sc-lab-vr">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <div>
+          <div style="font-size:16px;font-weight:700;">Laboratorio de realidad virtual</div>
+          <div style="font-size:13px;color:var(--gray);">Experimenta matemáticas y contabilidad en 3D inmersivo</div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <span class="badge badge-p">VR · AR · Web</span>
+          <span class="badge badge-live"><span class="live-dot"></span>Activo</span>
+        </div>
+      </div>
+      <div class="grid-2" style="margin-bottom:16px;">
+        <div>
+          <div class="vr-canvas" style="height:280px;">
+            <canvas id="vr-main-canvas" width="520" height="280"></canvas>
+            <div class="vr-hud">Lab. Cálculo 3D · Nivel 7</div>
+            <div class="vr-hud-r">
+              <div class="vr-chip" id="vr-fn-chip">f(x) = x²</div>
+              <div class="vr-chip" id="vr-slope-chip">f'(1) = 2</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;align-items:center;">
+            <span style="font-size:12px;color:var(--gray);">Función:</span>
+            <button class="btn btn-outline btn-sm vr-fn-btn active-fn" id="vr-x2" onclick="setVRFn('x2',this)">x²</button>
+            <button class="btn btn-outline btn-sm vr-fn-btn" id="vr-sin" onclick="setVRFn('sin',this)">sin(x)</button>
+            <button class="btn btn-outline btn-sm vr-fn-btn" id="vr-x3" onclick="setVRFn('x3',this)">x³−3x</button>
+            <div style="flex:1;"></div>
+            <input type="range" min="-3" max="3" value="1" step="1" id="vr-slider" oninput="updateVR()" style="width:90px;"/>
+            <span id="vr-x-out" style="font-size:12px;font-weight:700;width:16px;">1</span>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px;">
+            <button class="btn btn-outline btn-sm" id="vr-tang-btn" onclick="toggleVRTang(this)">Tangente</button>
+            <button class="btn btn-outline btn-sm" id="vr-area-btn" onclick="toggleVRArea(this)">Integral</button>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <div class="card">
+            <div class="card-title">Desafío VR activo</div>
+            <div style="background:var(--p4);border-radius:var(--radius-sm);padding:12px;margin-bottom:10px;font-family:var(--mono);font-size:14px;color:var(--p);text-align:center;">f(x) = x² → f'(3) = ?</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              <button class="btn btn-outline btn-sm" onclick="vrChallenge(3)">3</button>
+              <button class="btn btn-outline btn-sm" onclick="vrChallenge(6)">6</button>
+              <button class="btn btn-outline btn-sm" onclick="vrChallenge(9)">9</button>
+              <button class="btn btn-outline btn-sm" onclick="vrChallenge(12)">12</button>
+            </div>
+            <div id="vr-fb" style="display:none;margin-top:8px;padding:8px 12px;border-radius:var(--radius-sm);font-size:13px;"></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Entornos disponibles</div>
+            <div style="display:flex;flex-direction:column;gap:6px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;"><span style="font-size:13px;">Lab. Cálculo 3D</span><span class="badge badge-g">Activo</span></div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;"><span style="font-size:13px;">Lab. Contabilidad</span><button class="btn btn-outline btn-sm" onclick="showToast('Iniciando Lab. Contabilidad...')">Entrar</button></div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;"><span style="font-size:13px;color:var(--gray);">Modo Arena</span><span class="badge" style="background:var(--gray2);color:var(--gray);">Pronto</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- S: PERFIL -->
+    <div class="screen" id="sc-perfil">
+      <div class="grid-2">
+        <div class="card">
+          <div style="text-align:center;padding:20px 0;">
+            <div style="width:80px;height:80px;border-radius:50%;background:var(--p);margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;color:#fff;" id="profile-ava">AG</div>
+            <div style="font-size:18px;font-weight:700;" id="profile-name">Ana Gómez</div>
+            <div style="font-size:13px;color:var(--gray);margin-top:4px;" id="profile-email">ana.gomez@uni.edu</div>
+            <div style="margin-top:10px;display:flex;gap:8px;justify-content:center;">
+              <span class="badge badge-p" id="profile-role">Estudiante</span>
+              <span class="badge badge-a">Nivel 7</span>
+            </div>
+          </div>
+          <div style="border-top:1px solid var(--gray2);padding-top:16px;display:flex;flex-direction:column;gap:10px;font-size:13px;">
+            <div style="display:flex;justify-content:space-between;"><span style="color:var(--gray);">Universidad</span><span style="font-weight:600;">UNI Lima</span></div>
+            <div style="display:flex;justify-content:space-between;"><span style="color:var(--gray);">Carrera</span><span style="font-weight:600;">Ingeniería</span></div>
+            <div style="display:flex;justify-content:space-between;"><span style="color:var(--gray);">Miembro desde</span><span style="font-weight:600;">Marzo 2025</span></div>
+            <div style="display:flex;justify-content:space-between;"><span style="color:var(--gray);">Ejercicios resueltos</span><span style="font-weight:600;">47</span></div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px;">
+          <div class="met-card"><div class="met-label">XP total</div><div class="met-val">1,240</div></div>
+          <div class="met-card"><div class="met-label">Precisión promedio</div><div class="met-val">82%</div></div>
+          <div class="met-card"><div class="met-label">Racha actual</div><div class="met-val">🔥 5 días</div></div>
+          <div class="card">
+            <div class="card-title">Ajustes</div>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <button class="btn btn-outline" style="width:100%;text-align:left;" onclick="showToast('Preferencias guardadas')">Notificaciones</button>
+              <button class="btn btn-outline" style="width:100%;text-align:left;" onclick="showToast('Idioma actualizado')">Idioma: Español</button>
+              <button class="btn btn-danger btn-sm" style="width:100%;" onclick="logout()">Cerrar sesión</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- === TEACHER SCREENS === -->
+
+    <!-- T: DASHBOARD -->
+    <div class="screen" id="sc-t-dashboard">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+        <div><div style="font-size:16px;font-weight:700;">Panel del docente</div><div style="font-size:13px;color:var(--gray);">Cálculo I · Semestre 2025-II</div></div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-outline btn-sm" onclick="navigate('t-estadisticas')">Ver estadísticas</button>
+          <button class="btn btn-primary btn-sm" onclick="navigate('t-material')">+ Subir material</button>
+        </div>
+      </div>
+      <div class="grid-4" style="margin-bottom:20px;">
+        <div class="met-card"><div class="met-label">Estudiantes</div><div class="met-val">38</div><div class="met-sub">3 nuevos esta semana</div></div>
+        <div class="met-card"><div class="met-label">Promedio</div><div class="met-val">14.2</div><div class="met-sub">+0.8 vs semana anterior</div></div>
+        <div class="met-card"><div class="met-label">Participación</div><div class="met-val">71%</div><div class="met-sub">27 activos hoy</div></div>
+        <div class="met-card"><div class="met-label">Ejercicios hoy</div><div class="met-val">341</div><div class="met-sub">en todas las sesiones</div></div>
+      </div>
+      <div class="grid-2" style="margin-bottom:16px;">
+        <div class="card">
+          <div class="card-title">Errores frecuentes por tema</div>
+          <div class="bar-group" id="t-error-bars"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Distribución de actividad</div>
+          <div class="donut-wrap">
+            <canvas id="t-donut" width="130" height="130"></canvas>
+            <div class="donut-legend" id="t-donut-legend"></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <div class="card-title" style="margin:0;">Estudiantes recientes</div>
+          <button class="btn btn-outline btn-sm" onclick="navigate('t-estadisticas')">Ver todos →</button>
+        </div>
+        <div id="t-student-list"></div>
+      </div>
+    </div>
+
+    <!-- T: ESTADISTICAS -->
+    <div class="screen" id="sc-t-estadisticas">
+      <div style="font-size:16px;font-weight:700;margin-bottom:4px;">Estadísticas de estudiantes</div>
+      <div style="font-size:13px;color:var(--gray);margin-bottom:20px;">Cálculo I · últimos 30 días</div>
+      <div class="grid-4" style="margin-bottom:20px;">
+        <div class="met-card"><div class="met-label">Tasa de aprobación</div><div class="met-val">74%</div></div>
+        <div class="met-card"><div class="met-label">Ejercicios completados</div><div class="met-val">2,841</div></div>
+        <div class="met-card"><div class="met-label">Sesiones VR</div><div class="met-val">156</div></div>
+        <div class="met-card"><div class="met-label">Intervenciones IA</div><div class="met-val">1,204</div></div>
+      </div>
+      <div class="grid-2" style="margin-bottom:16px;">
+        <div class="card">
+          <div class="card-title">Rendimiento semanal (%)</div>
+          <canvas id="t-weekly-chart" width="420" height="160"></canvas>
+        </div>
+        <div class="card">
+          <div class="card-title">Distribución de notas</div>
+          <canvas id="t-notes-chart" width="420" height="160"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Tabla completa de estudiantes</div>
+        <div id="t-full-table"></div>
+      </div>
+    </div>
+
+    <!-- T: MATERIAL -->
+    <div class="screen" id="sc-t-material">
+      <div style="font-size:16px;font-weight:700;margin-bottom:4px;">Material educativo</div>
+      <div style="font-size:13px;color:var(--gray);margin-bottom:20px;">Gestiona archivos, guías y videos por curso</div>
+      <div class="grid-2">
+        <div>
+          <div class="card" style="margin-bottom:16px;">
+            <div class="card-title">Subir nuevo material</div>
+            <div class="upload-zone" onclick="showToast('Seleccionar archivo del equipo')">
+              <div class="upload-icon">📁</div>
+              <div class="upload-text">Arrastra archivos aquí</div>
+              <div class="upload-sub">PDF, MP4, DOCX, XLSX · Máx 100 MB</div>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
+              <select style="flex:1;padding:8px 12px;border:1.5px solid var(--gray2);border-radius:var(--radius-sm);font-family:var(--font);font-size:13px;outline:none;">
+                <option>Cálculo I</option><option>Contabilidad</option><option>Álgebra</option>
+              </select>
+              <select style="flex:1;padding:8px 12px;border:1.5px solid var(--gray2);border-radius:var(--radius-sm);font-family:var(--font);font-size:13px;outline:none;">
+                <option>Tema 1</option><option>Tema 2</option><option>Tema 3</option><option>Tema 4</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" style="width:100%;margin-top:10px;" onclick="showToast('Material subido exitosamente ✓')">Subir material</button>
+          </div>
+          <div class="card">
+            <div class="card-title">Tipos de material</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <span class="badge badge-r">PDF</span>
+              <span class="badge badge-p">Video</span>
+              <span class="badge badge-t">Ejercicio</span>
+              <span class="badge badge-a">Evaluación</span>
+              <span class="badge" style="background:var(--gray2);color:var(--gray);">Guía</span>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Material reciente</div>
+          <div class="file-list" id="file-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- T: EVALUACIONES -->
+    <div class="screen" id="sc-t-evaluaciones">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+        <div><div style="font-size:16px;font-weight:700;">Evaluaciones</div><div style="font-size:13px;color:var(--gray);">Crea y gestiona exámenes con preguntas generadas por IA</div></div>
+        <button class="btn btn-primary btn-sm" onclick="showToast('Nueva evaluación creada')">+ Nueva evaluación</button>
+      </div>
+      <div class="grid-2">
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <div class="card">
+            <div class="card-title">Evaluación activa</div>
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
+              <div><div style="font-size:14px;font-weight:700;">Examen parcial — Derivadas</div><div style="font-size:12px;color:var(--gray);">Publicado · 28 estudiantes completaron</div></div>
+              <span class="badge badge-g">Activo</span>
+            </div>
+            <div class="bar-group">
+              <div class="bar-row"><span class="bar-label">Completado</span><div class="bar-track"><div class="bar-fill" style="width:74%;background:var(--green);"></div></div><span class="bar-val">74%</span></div>
+              <div class="bar-row"><span class="bar-label">Promedio</span><div class="bar-track"><div class="bar-fill" style="width:72%;background:var(--p);"></div></div><span class="bar-val">14.4</span></div>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:12px;">
+              <button class="btn btn-outline btn-sm" onclick="showToast('Abriendo resultados...')">Ver resultados</button>
+              <button class="btn btn-outline btn-sm" onclick="showToast('Cerrando evaluación...')">Cerrar</button>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Generador de preguntas IA</div>
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <select style="width:100%;padding:9px 12px;border:1.5px solid var(--gray2);border-radius:var(--radius-sm);font-family:var(--font);font-size:13px;outline:none;">
+                <option>Cálculo I — Derivadas</option><option>Contabilidad — Balance</option><option>Álgebra — Matrices</option>
+              </select>
+              <div style="display:flex;gap:8px;">
+                <select style="flex:1;padding:9px;border:1.5px solid var(--gray2);border-radius:var(--radius-sm);font-family:var(--font);font-size:12px;outline:none;">
+                  <option>Nivel básico</option><option>Nivel medio</option><option>Nivel avanzado</option>
+                </select>
+                <select style="flex:1;padding:9px;border:1.5px solid var(--gray2);border-radius:var(--radius-sm);font-family:var(--font);font-size:12px;outline:none;">
+                  <option>5 preguntas</option><option>10 preguntas</option><option>20 preguntas</option>
+                </select>
+              </div>
+              <button class="btn btn-primary" onclick="genAIQuestions()">Generar con IA</button>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Preguntas generadas</div>
+          <div id="ai-questions"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- T: VR DOCENTE -->
+    <div class="screen" id="sc-t-vr">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <div><div style="font-size:16px;font-weight:700;">Sala de control VR</div><div style="font-size:13px;color:var(--gray);">Monitoreo en tiempo real del laboratorio virtual</div></div>
+        <div style="display:flex;gap:8px;">
+          <span class="badge badge-live"><span class="live-dot"></span>En vivo · 23 estudiantes</span>
+          <button class="btn btn-primary btn-sm" onclick="showToast('Interviniendo sesión...')">Intervenir</button>
+        </div>
+      </div>
+      <div class="grid-2" style="margin-bottom:16px;">
+        <div>
+          <div class="vr-canvas" style="height:260px;">
+            <canvas id="t-vr-canvas" width="520" height="260"></canvas>
+            <div class="vr-hud">Lab. Cálculo 3D · Vista docente</div>
+            <div class="vr-hud-r">
+              <div class="vr-chip">23 / 25 conectados</div>
+              <div class="vr-chip" id="t-vr-time">18:34 transcurrido</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;">
+            <button class="btn btn-outline btn-sm" onclick="showToast('Lápiz 3D activado')">Lápiz 3D</button>
+            <button class="btn btn-outline btn-sm" onclick="showToast('Puntero láser activado')">Puntero láser</button>
+            <button class="btn btn-outline btn-sm" onclick="showToast('Pizarra flotante abierta')">Pizarra</button>
+            <button class="btn btn-outline btn-sm" onclick="showToast('Modo demostración activado')">Demostrar</button>
+            <button class="btn btn-danger btn-sm" onclick="showToast('Sesión pausada para todos')">Pausar todos</button>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+          <div class="card">
+            <div class="card-title">Alertas IA en tiempo real</div>
+            <div id="t-vr-alerts"></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Sugerencia del sistema IA</div>
+            <div style="background:var(--p4);border-radius:var(--radius-sm);padding:12px;font-size:13px;color:var(--p);line-height:1.6;margin-bottom:10px;">Lucía P. lleva 6 min sin avanzar. Se recomienda intervenir con una pista sobre la función interna.</div>
+            <button class="btn btn-primary btn-sm" style="width:100%;" onclick="showToast('Pista enviada a Lucía Paredes')">Enviar pista automática</button>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <div class="card-title" style="margin:0;">Estado de cada estudiante en VR</div>
+          <div style="display:flex;gap:10px;font-size:11px;">
+            <span style="display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;background:var(--green);border-radius:50%;display:inline-block;"></span>Sin dificultad</span>
+            <span style="display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;background:var(--amber);border-radius:50%;display:inline-block;"></span>Con dudas</span>
+            <span style="display:flex;align-items:center;gap:4px;"><span style="width:8px;height:8px;background:var(--red);border-radius:50%;display:inline-block;"></span>Necesita ayuda</span>
+          </div>
+        </div>
+        <div id="t-vr-students"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<script>
+// ===== STATE =====
+var role='student';
+var exShowTang=false,exShowArea=false;
+var vrFn='x2',vrShowTang=false,vrShowArea=false;
+var chatResponses=[
+  'La regla de la cadena se aplica a funciones compuestas: d/dx[f(g(x))] = f\'(g(x)) · g\'(x). Identifica siempre la función interna y externa primero.',
+  'Para f(x)=(3x²+2)⁵: exterior es u⁵ → 5u⁴, interior es 3x²+2 → 6x. Resultado: 5(3x²+2)⁴·6x = 30x(3x²+2)⁴. ¿Quieres practicar uno similar?',
+  'Excelente pregunta. Recuerda que la derivada de sin(x) es cos(x), y si tienes sin(g(x)), aplicas la cadena: cos(g(x))·g\'(x).',
+  'El balance general sigue la ecuación: Activos = Pasivos + Patrimonio. Todo asiento contable debe mantener esta ecuación equilibrada.',
+  '¡Muy bien! Estás progresando. ¿Quieres un ejercicio de mayor dificultad para seguir subiendo de nivel?'
+];
+var chatIdx=0;
+var aiGenerated=false;
+var vrTimerSecs=1114,vrTimerInt;
+
+// ===== LOGIN =====
+function setRole(r,btn){
+  role=r;
+  document.querySelectorAll('.role-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+function doLogin(){
+  document.getElementById('login-page').style.display='none';
+  document.getElementById('main-app').style.display='flex';
+  buildNav();
+  initApp();
+}
+function logout(){
+  document.getElementById('main-app').style.display='none';
+  document.getElementById('login-page').style.display='block';
+}
+
+// ===== NAV =====
+var studentNav=[
+  {id:'home',label:'Inicio',icon:'⌂',title:'Inicio'},
+  {id:'ejercicios',label:'Ejercicios',icon:'✎',title:'Ejercicios interactivos'},
+  {id:'chat-ia',label:'Tutor IA',icon:'🤖',title:'Tutor IA'},
+  {id:'lab-vr',label:'Lab. Virtual',icon:'◈',title:'Laboratorio VR'},
+  {id:'recompensas',label:'Logros',icon:'★',title:'Logros y recompensas'},
+  {id:'perfil',label:'Perfil',icon:'◉',title:'Mi perfil'},
+];
+var teacherNav=[
+  {id:'t-dashboard',label:'Dashboard',icon:'⊞',title:'Panel del docente'},
+  {id:'t-estadisticas',label:'Estadísticas',icon:'↗',title:'Estadísticas'},
+  {id:'t-material',label:'Material',icon:'📄',title:'Material educativo'},
+  {id:'t-evaluaciones',label:'Evaluaciones',icon:'✔',title:'Evaluaciones'},
+  {id:'t-vr',label:'Lab. VR',icon:'◈',title:'Sala de control VR'},
+  {id:'perfil',label:'Perfil',icon:'◉',title:'Mi perfil'},
+];
+function buildNav(){
+  var nav=role==='student'?studentNav:teacherNav;
+  var html='';
+  nav.forEach(function(item){
+    html+='<div class="sb-item'+(item.id==='home'||item.id==='t-dashboard'?' active':'').replace('home','home').replace('t-dashboard','t-dashboard')+'" id="nav-'+item.id+'" onclick="navigate(\''+item.id+'\')"><div class="ic">'+item.icon+'</div><span>'+item.label+'</span></div>';
+  });
+  document.getElementById('sb-nav').innerHTML='<div class="sb-section">'+( role==='student'?'Estudiante':'Docente')+'</div>'+html;
+
+  if(role==='teacher'){
+    document.getElementById('sb-ava').textContent='LT';
+    document.getElementById('sb-uname').textContent='Dr. Luis Torres';
+    document.getElementById('sb-urole').textContent='Docente · Matemáticas';
+    document.getElementById('tb-ava').textContent='LT';
+    document.getElementById('tb-gamif').style.display='none';
+    document.getElementById('profile-ava').textContent='LT';
+    document.getElementById('profile-name').textContent='Dr. Luis Torres';
+    document.getElementById('profile-email').textContent='l.torres@uni.edu';
+    document.getElementById('profile-role').textContent='Docente';
+  }
+}
+
+function navigate(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.sb-item').forEach(b=>b.classList.remove('active'));
+  var sc=document.getElementById('sc-'+id);
+  if(sc) sc.classList.add('active');
+  var nb=document.getElementById('nav-'+id);
+  if(nb) nb.classList.add('active');
+  var nav=role==='student'?studentNav:teacherNav;
+  var item=nav.find(n=>n.id===id)||{title:id};
+  document.getElementById('tb-title').textContent=item.title||id;
+
+  // init deferred
+  var inits={
+    'ejercicios':function(){setTimeout(function(){initExCanvas();},80);},
+    'lab-vr':function(){setTimeout(function(){initVRCanvas();},80);},
+    't-dashboard':function(){setTimeout(function(){initTeacherDash();},80);},
+    't-estadisticas':function(){setTimeout(function(){initTeacherStats();},80);},
+    't-material':function(){buildFileList();},
+    't-evaluaciones':function(){buildAIQuestions();},
+    't-vr':function(){setTimeout(function(){initTeacherVR();},80);},
+  };
+  if(inits[id]) inits[id]();
+}
+
+function toggleSidebar(){
+  document.getElementById('sidebar').classList.toggle('collapsed');
+}
+
+// ===== EXERCISE CANVAS =====
+var exTang=false,exArea=false;
+function initExCanvas(){
+  var c=document.getElementById('ex-canvas');
+  if(!c||c._init) return;c._init=true;
+  drawExCanvas();
+}
+function drawExCanvas(){
+  var c=document.getElementById('ex-canvas');if(!c)return;
+  var ctx=c.getContext('2d'),w=c.width,h=c.height;
+  ctx.clearRect(0,0,w,h);
+  ctx.fillStyle='#0a0820';ctx.fillRect(0,0,w,h);
+  var cx=w/2,cy=h/2,sx=45,sy=30;
+  // grid
+  ctx.strokeStyle='rgba(79,63,240,.15)';ctx.lineWidth=0.5;
+  for(var gx=-6;gx<=6;gx++){ctx.beginPath();ctx.moveTo(cx+gx*sx,0);ctx.lineTo(cx+gx*sx,h);ctx.stroke();}
+  for(var gy=-5;gy<=5;gy++){ctx.beginPath();ctx.moveTo(0,cy+gy*sy);ctx.lineTo(w,cy+gy*sy);ctx.stroke();}
+  // axes
+  ctx.strokeStyle='rgba(197,191,251,.4)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(0,cy);ctx.lineTo(w,cy);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(cx,0);ctx.lineTo(cx,h);ctx.stroke();
+  var px=parseInt(document.getElementById('ex-slider').value);
+  var py=px*px,slope=2*px;
+  // area
+  if(exArea){
+    ctx.fillStyle='rgba(15,184,164,.18)';
+    ctx.beginPath();
+    var started=false;
+    for(var xi=-5;xi<=px;xi+=0.05){
+      var yi=xi*xi,sx2=cx+xi*sx,sy2=cy-yi*sy;
+      if(!started){ctx.moveTo(sx2,cy);ctx.lineTo(sx2,sy2);started=true;}else ctx.lineTo(sx2,sy2);
+    }
+    ctx.lineTo(cx+px*sx,cy);ctx.closePath();ctx.fill();
+  }
+  // curve
+  ctx.strokeStyle='#7c6ff7';ctx.lineWidth=2.5;ctx.beginPath();
+  var first=true;
+  for(var x=-5;x<=5;x+=0.05){
+    var y=x*x,sxp=cx+x*sx,syp=cy-y*sy;
+    if(syp<-5||syp>h+5){first=true;continue;}
+    if(first){ctx.moveTo(sxp,syp);first=false;}else ctx.lineTo(sxp,syp);
+  }
+  ctx.stroke();
+  // tangent
+  if(exTang){
+    ctx.strokeStyle='#f0a500';ctx.lineWidth=1.5;ctx.setLineDash([6,4]);
+    ctx.beginPath();
+    ctx.moveTo(cx+(-4)*sx,cy-(py+slope*(-4-px))*sy);
+    ctx.lineTo(cx+(4)*sx,cy-(py+slope*(4-px))*sy);
+    ctx.stroke();ctx.setLineDash([]);
+  }
+  // point
+  ctx.fillStyle='#c5bffb';ctx.beginPath();ctx.arc(cx+px*sx,cy-py*sy,5,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#4f3ff0';ctx.lineWidth=2;ctx.stroke();
+  // hud
+  var sl=document.getElementById('ex-slope');if(sl)sl.textContent='f\'('+px+') = '+Math.round(slope*10)/10;
+}
+function updateExCanvas(){
+  var v=document.getElementById('ex-slider').value;
+  document.getElementById('ex-x-val').textContent=v;
+  drawExCanvas();
+}
+function toggleTang(btn){exTang=!exTang;btn.classList.toggle('btn-primary',exTang);btn.classList.toggle('btn-outline',!exTang);drawExCanvas();}
+function toggleArea(btn){exArea=!exArea;btn.classList.toggle('btn-primary',exArea);btn.classList.toggle('btn-outline',!exArea);drawExCanvas();}
+
+// ===== EXERCISE CHECK =====
+function checkEx(opt){
+  var btns=document.querySelectorAll('#ex-options .option-btn');
+  btns.forEach(b=>{b.classList.remove('correct','wrong');});
+  var map={a:0,b:1,c:2,d:3};
+  var fb=document.getElementById('ex-feedback');
+  if(opt==='b'){
+    btns[1].classList.add('correct');
+    fb.style.display='block';fb.style.background=getComputedStyle(document.documentElement).getPropertyValue('--green2')||'#d4f5e8';
+    fb.style.color='#0f6840';fb.style.border='1.5px solid #1ab87a';
+    fb.innerHTML='✓ ¡Correcto! Aplicaste perfectamente la regla de la cadena. Derivada externa (5u⁴) × derivada interna (6x) = 30x(3x²+2)⁴. <strong>+50 XP</strong>';
+    document.getElementById('top-pts').textContent='1,290 XP';
+    showToast('+50 XP ganados! 🎉');
+  } else {
+    btns[map[opt]].classList.add('wrong');
+    fb.style.display='block';fb.style.background='#fdeaea';fb.style.color='#a13030';fb.style.border='1.5px solid #e84c4c';
+    fb.innerHTML='✗ No es correcto. Recuerda multiplicar la derivada de la función externa por la derivada de la función interna. Revisa la pista.';
+  }
+}
+
+// ===== CHAT =====
+function chatSend(txt){
+  var inp=document.getElementById('chat-inp');
+  var msg=txt||(inp?inp.value.trim():'');
+  if(!msg)return;
+  var container=document.getElementById('chat-msgs');
+  var ub=document.createElement('div');ub.className='msg-user';ub.textContent=msg;
+  container.appendChild(ub);
+  if(inp)inp.value='';
+  var typing=document.createElement('div');typing.className='msg-ai';typing.innerHTML='<em style="opacity:.5">Escribiendo...</em>';
+  container.appendChild(typing);
+  container.scrollTop=container.scrollHeight;
+  setTimeout(function(){
+    typing.remove();
+    var ab=document.createElement('div');ab.className='msg-ai';
+    ab.innerHTML=chatResponses[chatIdx%chatResponses.length];
+    container.appendChild(ab);
+    chatIdx++;
+    container.scrollTop=container.scrollHeight;
+  },1200);
+}
+
+// ===== VR CANVAS =====
+function initVRCanvas(){
+  var c=document.getElementById('vr-main-canvas');
+  if(!c||c._init)return;c._init=true;
+  drawVRCanvas();
+}
+function fv(fn,x){
+  if(fn==='x2')return x*x;
+  if(fn==='sin')return Math.sin(x)*3;
+  if(fn==='x3')return x*x*x-3*x;
+  return x*x;
+}
+function fd(fn,x){
+  if(fn==='x2')return 2*x;
+  if(fn==='sin')return Math.cos(x)*3;
+  if(fn==='x3')return 3*x*x-3;
+  return 2*x;
+}
+function drawVRCanvas(){
+  var c=document.getElementById('vr-main-canvas');if(!c)return;
+  var ctx=c.getContext('2d'),w=c.width,h=c.height;
+  ctx.clearRect(0,0,w,h);ctx.fillStyle='#0a0820';ctx.fillRect(0,0,w,h);
+  var cx=w/2,cy=h/2,sx=50,sy=32;
+  ctx.strokeStyle='rgba(79,63,240,.15)';ctx.lineWidth=0.5;
+  for(var gx=-5;gx<=5;gx++){ctx.beginPath();ctx.moveTo(cx+gx*sx,0);ctx.lineTo(cx+gx*sx,h);ctx.stroke();}
+  for(var gy=-5;gy<=5;gy++){ctx.beginPath();ctx.moveTo(0,cy+gy*sy);ctx.lineTo(w,cy+gy*sy);ctx.stroke();}
+  ctx.strokeStyle='rgba(197,191,251,.4)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(0,cy);ctx.lineTo(w,cy);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(cx,0);ctx.lineTo(cx,h);ctx.stroke();
+  var px=parseInt(document.getElementById('vr-slider').value),py=fv(vrFn,px),slope=fd(vrFn,px);
+  if(vrShowArea){
+    ctx.fillStyle='rgba(15,184,164,.15)';ctx.beginPath();
+    var st=true;
+    for(var xi=-5;xi<=px;xi+=0.05){var yi=fv(vrFn,xi);var sxp=cx+xi*sx,syp=cy-yi*sy;if(st){ctx.moveTo(sxp,cy);ctx.lineTo(sxp,syp);st=false;}else ctx.lineTo(sxp,syp);}
+    ctx.lineTo(cx+px*sx,cy);ctx.closePath();ctx.fill();
+  }
+  ctx.strokeStyle='#7c6ff7';ctx.lineWidth=2.5;ctx.beginPath();var first=true;
+  for(var x=-5;x<=5;x+=0.05){var y=fv(vrFn,x),sxp=cx+x*sx,syp=cy-y*sy;if(syp<-5||syp>h+5){first=true;continue;}if(first){ctx.moveTo(sxp,syp);first=false;}else ctx.lineTo(sxp,syp);}
+  ctx.stroke();
+  if(vrShowTang){
+    ctx.strokeStyle='#f0a500';ctx.lineWidth=1.5;ctx.setLineDash([6,4]);
+    ctx.beginPath();ctx.moveTo(cx+(-4)*sx,cy-(py+slope*(-4-px))*sy);ctx.lineTo(cx+(4)*sx,cy-(py+slope*(4-px))*sy);ctx.stroke();ctx.setLineDash([]);
+  }
+  ctx.fillStyle='#c5bffb';ctx.beginPath();ctx.arc(cx+px*sx,cy-py*sy,6,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#4f3ff0';ctx.lineWidth=2;ctx.stroke();
+  var fnLabels={x2:'f(x) = x²',sin:'f(x) = sin(x)',x3:'f(x) = x³−3x'};
+  var fc=document.getElementById('vr-fn-chip');if(fc)fc.textContent=fnLabels[vrFn];
+  var sc2=document.getElementById('vr-slope-chip');if(sc2)sc2.textContent="f'("+px+') = '+Math.round(slope*10)/10;
+}
+function setVRFn(fn,btn){
+  vrFn=fn;
+  document.querySelectorAll('.vr-fn-btn').forEach(b=>{b.classList.remove('btn-primary');b.classList.add('btn-outline');});
+  btn.classList.remove('btn-outline');btn.classList.add('btn-primary');
+  drawVRCanvas();
+}
+function updateVR(){
+  document.getElementById('vr-x-out').textContent=document.getElementById('vr-slider').value;
+  drawVRCanvas();
+}
+function toggleVRTang(btn){vrShowTang=!vrShowTang;btn.classList.toggle('btn-primary',vrShowTang);btn.classList.toggle('btn-outline',!vrShowTang);drawVRCanvas();}
+function toggleVRArea(btn){vrShowArea=!vrShowArea;btn.classList.toggle('btn-primary',vrShowArea);btn.classList.toggle('btn-outline',!vrShowArea);drawVRCanvas();}
+function vrChallenge(val){
+  var fb=document.getElementById('vr-fb');fb.style.display='block';
+  if(val===6){fb.style.background='#d4f5e8';fb.style.color='#0f6840';fb.style.border='1.5px solid #1ab87a';fb.innerHTML='✓ ¡Correcto! f\'(x)=2x → f\'(3)=6. +30 XP';showToast('+30 XP 🎯');}
+  else{fb.style.background='#fdeaea';fb.style.color='#a13030';fb.style.border='1.5px solid #e84c4c';fb.innerHTML='✗ Recuerda: f\'(x)=2x, entonces f\'(3)=2×3=?';}
+}
+
+// ===== TEACHER DASHBOARD =====
+function initTeacherDash(){
+  buildErrorBars();
+  drawDonut();
+  buildStudentList();
+}
+function buildErrorBars(){
+  var el=document.getElementById('t-error-bars');if(!el||el.innerHTML!=='')return;
+  var data=[['Regla de la cadena',78],['Límites',62],['Integrales',55],['Matrices',38],['Derivada básica',22]];
+  var colors=['#e84c4c','#f0a500','#f0a500','#4f3ff0','#1ab87a'];
+  data.forEach(function(d,i){
+    var row=document.createElement('div');row.className='bar-row';
+    row.innerHTML='<span class="bar-label">'+d[0]+'</span><div class="bar-track"><div class="bar-fill" style="width:0%;background:'+colors[i]+'" data-w="'+d[1]+'%"></div></div><span class="bar-val">'+d[1]+'%</span>';
+    el.appendChild(row);
+    setTimeout(function(){row.querySelector('[data-w]').style.width=d[1]+'%';},80);
+  });
+}
+function drawDonut(){
+  var c=document.getElementById('t-donut');if(!c||c._done)return;c._done=true;
+  var ctx=c.getContext('2d'),cx=65,cy=65,r=52;
+  var segs=[{val:14,color:'#1ab87a',label:'Resolviendo (14)'},{val:5,color:'#f0a500',label:'Con dudas (5)'},{val:3,color:'#e84c4c',label:'Con errores (3)'},{val:1,color:'#6b6b8a',label:'Inactivo (1)'}];
+  var total=23,start=-Math.PI/2;
+  segs.forEach(function(s){
+    var angle=(s.val/total)*Math.PI*2;
+    ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,start,start+angle);ctx.closePath();ctx.fillStyle=s.color;ctx.fill();start+=angle;
+  });
+  ctx.beginPath();ctx.arc(cx,cy,30,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();
+  ctx.fillStyle='#0f0c26';ctx.font='700 14px Sora,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('23',cx,cy-6);
+  ctx.font='10px Sora,sans-serif';ctx.fillStyle='#6b6b8a';ctx.fillText('activos',cx,cy+7);
+  var leg=document.getElementById('t-donut-legend');if(!leg)return;
+  segs.forEach(function(s){var d=document.createElement('div');d.className='donut-leg-item';d.innerHTML='<div class="donut-leg-dot" style="background:'+s.color+'"></div><span>'+s.label+'</span>';leg.appendChild(d);});
+}
+function buildStudentList(){
+  var el=document.getElementById('t-student-list');if(!el||el.innerHTML!=='')return;
+  var students=[
+    {ini:'AG',bg:'#f0eeff',tc:'#4f3ff0',name:'Ana Gómez',level:7,prec:82,status:'ok'},
+    {ini:'CM',bg:'#d0f5f1',tc:'#0a8f7e',name:'Carlos Mejía',level:5,prec:55,status:'help'},
+    {ini:'LP',bg:'#fff4d6',tc:'#b37a00',name:'Lucía Paredes',level:3,prec:38,status:'error'},
+    {ini:'DR',bg:'#d4f5e8',tc:'#0f8a57',name:'Diego Ríos',level:6,prec:76,status:'ok'},
+    {ini:'MF',bg:'#fdeaea',tc:'#a13030',name:'María Flores',level:4,prec:43,status:'error'},
+  ];
+  var statusC={ok:'#1ab87a',help:'#f0a500',error:'#e84c4c'};
+  var statusL={ok:'Sin dificultad',help:'Pidiendo ayuda',error:'Con errores'};
+  students.forEach(function(s){
+    var row=document.createElement('div');row.className='student-row-d';
+    row.innerHTML='<div class="s-ava" style="background:'+s.bg+';color:'+s.tc+';">'+s.ini+'</div><div style="flex:1;"><div style="font-size:13px;font-weight:700;">'+s.name+'</div><div style="font-size:11px;color:var(--gray);">Nivel '+s.level+'</div><div class="pbar" style="width:80px;margin-top:4px;"><div class="pfill" style="width:'+s.prec+'%;background:'+statusC[s.status]+';"></div></div></div><div style="text-align:right;"><span class="badge" style="background:'+statusC[s.status]+'22;color:'+statusC[s.status]+';">'+statusL[s.status]+'</span><div style="font-size:11px;color:var(--gray);margin-top:4px;">'+s.prec+'% precisión</div></div>';
+    el.appendChild(row);
+  });
+}
+
+// ===== TEACHER STATS =====
+function initTeacherStats(){
+  drawWeeklyChart();drawNotesChart();buildFullTable();
+}
+function drawWeeklyChart(){
+  var c=document.getElementById('t-weekly-chart');if(!c||c._d)return;c._d=true;
+  var ctx=c.getContext('2d'),w=c.width,h=c.height;ctx.clearRect(0,0,w,h);
+  var weeks=['S1','S2','S3','S4','S5','S6'],vals=[60,65,68,72,69,74];
+  var maxV=80,bw=38,gap=(w-weeks.length*bw)/(weeks.length+1),bh=120,by=h-24;
+  weeks.forEach(function(wk,i){
+    var bx=gap+(bw+gap)*i,bH=Math.round(vals[i]/maxV*bh);
+    ctx.fillStyle='rgba(79,63,240,.12)';ctx.fillRect(bx,by-bh,bw,bh);
+    ctx.fillStyle='#4f3ff0';ctx.fillRect(bx,by-bH,bw,bH);
+    ctx.fillStyle='#6b6b8a';ctx.font='10px Sora,sans-serif';ctx.textAlign='center';
+    ctx.fillText(vals[i]+'%',bx+bw/2,by-bH-5);
+    ctx.fillText(wk,bx+bw/2,by+14);
+  });
+}
+function drawNotesChart(){
+  var c=document.getElementById('t-notes-chart');if(!c||c._d)return;c._d=true;
+  var ctx=c.getContext('2d'),w=c.width,h=c.height;ctx.clearRect(0,0,w,h);
+  var ranges=[['0-7',3],['8-10',5],['11-13',12],['14-16',14],['17-20',4]];
+  var max=14,bw=52,gap=(w-5*bw)/6,bh=120,by=h-24;
+  var cols=['#e84c4c','#f0a500','#7c6ff7','#4f3ff0','#1ab87a'];
+  ranges.forEach(function(r,i){
+    var bx=gap+(bw+gap)*i,bH=Math.round(r[1]/max*bh);
+    ctx.fillStyle=cols[i]+'22';ctx.fillRect(bx,by-bh,bw,bh);
+    ctx.fillStyle=cols[i];ctx.fillRect(bx,by-bH,bw,bH);
+    ctx.fillStyle='#6b6b8a';ctx.font='10px Sora,sans-serif';ctx.textAlign='center';
+    ctx.fillText(r[1]+' est.',bx+bw/2,by-bH-5);ctx.fillText(r[0],bx+bw/2,by+14);
+  });
+}
+function buildFullTable(){
+  var el=document.getElementById('t-full-table');if(!el||el.innerHTML!=='')return;
+  var headers=['Estudiante','Nivel','Precisión','XP','Estado','Acción'];
+  var rows=[
+    ['Diego Ríos','6','92%','1,480','Sin dificultad'],['Ana Gómez','7','82%','1,240','Sin dificultad'],
+    ['Julián Roca','6','78%','1,120','Sin dificultad'],['Carlos Mejía','5','55%','820','Con dudas'],
+    ['María Flores','4','43%','610','Con errores'],['Lucía Paredes','3','38%','480','Con errores'],
+  ];
+  var statusC={'Sin dificultad':'#1ab87a','Con dudas':'#f0a500','Con errores':'#e84c4c'};
+  var table=document.createElement('table');table.style.cssText='width:100%;border-collapse:collapse;font-size:13px;';
+  var thead=document.createElement('thead');
+  var hr=document.createElement('tr');
+  headers.forEach(function(h){var th=document.createElement('th');th.textContent=h;th.style.cssText='text-align:left;padding:8px 10px;border-bottom:2px solid var(--gray2);color:var(--gray);font-weight:600;font-size:12px;';thead.appendChild(tr=hr);hr.appendChild(th);});
+  table.appendChild(thead);
+  var tbody=document.createElement('tbody');
+  rows.forEach(function(r){
+    var tr=document.createElement('tr');
+    r.forEach(function(cell,i){var td=document.createElement('td');td.style.cssText='padding:9px 10px;border-bottom:1px solid var(--gray2);';if(i===4){td.innerHTML='<span style="color:'+statusC[cell]+';font-weight:600;">'+cell+'</span>';}else{td.textContent=cell;}tr.appendChild(td);});
+    var td=document.createElement('td');td.style.cssText='padding:9px 10px;border-bottom:1px solid var(--gray2);';
+    td.innerHTML='<button class="btn btn-outline btn-sm" onclick="showToast(\'Abriendo perfil del estudiante...\')">Ver</button>';
+    tr.appendChild(td);tbody.appendChild(tr);
+  });
+  table.appendChild(tbody);el.appendChild(table);
+}
+
+// ===== FILE LIST =====
+function buildFileList(){
+  var el=document.getElementById('file-list');if(!el||el.innerHTML!=='')return;
+  var files=[
+    {name:'Guía de derivadas.pdf',size:'2.4 MB',type:'PDF',color:'#e84c4c',date:'Hoy'},
+    {name:'Video: Regla de la cadena.mp4',size:'48 MB',type:'MP4',color:'#4f3ff0',date:'Ayer'},
+    {name:'Ejercicios — Cálculo I.docx',size:'1.1 MB',type:'DOC',color:'#0fb8a4',date:'Lun'},
+    {name:'Balance general — Ejemplo.xlsx',size:'0.8 MB',type:'XLS',color:'#1ab87a',date:'Vie'},
+  ];
+  files.forEach(function(f){
+    var item=document.createElement('div');item.className='file-item';
+    item.innerHTML='<div class="file-ext" style="background:'+f.color+';">'+f.type+'</div><div style="flex:1;"><div style="font-size:13px;font-weight:600;">'+f.name+'</div><div style="font-size:11px;color:var(--gray);">'+f.size+' · '+f.date+'</div></div><button class="btn btn-outline btn-sm" onclick="showToast(\'Descargando...\')">↓</button>';
+    el.appendChild(item);
+  });
+}
+
+// ===== AI QUESTIONS =====
+function buildAIQuestions(){
+  var el=document.getElementById('ai-questions');if(!el||el.innerHTML!=='')return;
+  var qs=[
+    {q:'Si f(x) = (2x+1)³, ¿cuál es f\'(x)?',opts:['6(2x+1)²','3(2x+1)²','2(2x+1)²','(2x+1)³'],ans:0},
+    {q:'¿Cuál es la derivada de f(x) = sin(3x)?',opts:['cos(3x)','3cos(3x)','-3cos(3x)','sin(3x)'],ans:1},
+    {q:'Si f(x) = eˣ², entonces f\'(x) = ?',opts:['eˣ²','2x·eˣ²','x·eˣ²','2eˣ²'],ans:1},
+  ];
+  qs.forEach(function(q,i){
+    var div=document.createElement('div');div.style.cssText='margin-bottom:14px;border-bottom:1px solid var(--gray2);padding-bottom:14px;';
+    div.innerHTML='<div style="font-size:13px;font-weight:600;margin-bottom:8px;">'+(i+1)+'. '+q.q+'</div>'+q.opts.map(function(o,j){return'<div style="font-size:12px;padding:4px 0;color:'+( j===q.ans?'var(--green)':'var(--gray)')+';">'+(j===q.ans?'✓ ':'○ ')+o+'</div>';}).join('');
+    el.appendChild(div);
+  });
+  var note=document.createElement('div');note.style.cssText='font-size:12px;color:var(--gray);background:var(--gray3);padding:10px;border-radius:var(--radius-sm);';
+  note.textContent='Generado por IA · Preguntas adaptadas al nivel del grupo';
+  el.appendChild(note);
+}
+function genAIQuestions(){
+  var el=document.getElementById('ai-questions');
+  el.innerHTML='';aiGenerated=false;
+  showToast('Generando preguntas con IA...');
+  setTimeout(function(){buildAIQuestions();showToast('5 preguntas generadas ✓');},1500);
+}
+
+// ===== TEACHER VR =====
+function initTeacherVR(){
+  drawTeacherVR();
+  buildVRAlerts();
+  buildVRStudents();
+  startVRTimer();
+}
+function drawTeacherVR(){
+  var c=document.getElementById('t-vr-canvas');if(!c||c._d)return;c._d=true;
+  var ctx=c.getContext('2d'),w=c.width,h=c.height;
+  ctx.fillStyle='#0a0820';ctx.fillRect(0,0,w,h);
+  ctx.strokeStyle='rgba(79,63,240,.15)';ctx.lineWidth=0.5;
+  for(var x=0;x<w;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke();}
+  for(var y=0;y<h;y+=35){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();}
+  var positions=[
+    [80,90],[150,70],[120,160],[240,55],[310,110],[390,80],[460,55],[530,90],[580,140],
+    [100,190],[220,175],[320,190],[450,170],[540,190],[600,75],[145,55],[380,160],[510,130],
+    [75,195],[290,50],[470,200],[590,175],[200,195]
+  ];
+  var colors=['#1ab87a','#1ab87a','#e84c4c','#1ab87a','#1ab87a','#f0a500','#1ab87a','#1ab87a','#1ab87a','#1ab87a','#f0a500','#1ab87a','#1ab87a','#1ab87a','#1ab87a','#1ab87a','#1ab87a','#1ab87a','#1ab87a','#1ab87a','#1ab87a','#e84c4c','#1ab87a'];
+  var inits=['AG','CM','LP','DR','MF','AL','JR','SM','PR','KT','EV','NB','OC','QD','RF','TG','UH','VI','WJ','XK','YL','ZM','AN'];
+  positions.forEach(function(pos,i){
+    var col=colors[i];
+    ctx.beginPath();ctx.arc(pos[0],pos[1],11,0,Math.PI*2);ctx.fillStyle=col+'25';ctx.fill();
+    ctx.strokeStyle=col;ctx.lineWidth=1.5;ctx.stroke();
+    ctx.fillStyle='#EEEDFE';ctx.font='500 8px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(inits[i],pos[0],pos[1]);
+  });
+  ctx.beginPath();ctx.arc(w/2,h/2,14,0,Math.PI*2);ctx.fillStyle='rgba(79,63,240,.35)';ctx.fill();
+  ctx.strokeStyle='#7c6ff7';ctx.lineWidth=2.5;ctx.stroke();
+  ctx.fillStyle='#fff';ctx.font='700 8px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('DOC',w/2,h/2);
+}
+function buildVRAlerts(){
+  var el=document.getElementById('t-vr-alerts');if(!el||el.innerHTML!=='')return;
+  var alerts=[
+    {color:'#e84c4c',msg:'Lucía P. — 6 min sin avanzar',t:'hace 1 min'},
+    {color:'#f0a500',msg:'Carlos M. — solicitó ayuda IA',t:'hace 2 min'},
+    {color:'#e84c4c',msg:'María F. — 3 errores consecutivos',t:'hace 3 min'},
+    {color:'#f0a500',msg:'Andrés L. — tiempo alto en ej.2',t:'hace 5 min'},
+  ];
+  alerts.forEach(function(a){
+    var d=document.createElement('div');d.className='alert-item';
+    d.innerHTML='<div class="alert-dot" style="background:'+a.color+'"></div><div style="flex:1;"><div style="font-size:12px;font-weight:600;">'+a.msg+'</div><div style="font-size:11px;color:var(--gray);">'+a.t+'</div></div>';
+    el.appendChild(d);
+  });
+}
+function buildVRStudents(){
+  var el=document.getElementById('t-vr-students');if(!el||el.innerHTML!=='')return;
+  var students=[
+    {ini:'AG',bg:'#f0eeff',tc:'#4f3ff0',name:'Ana Gómez',zone:'Derivadas',status:'ok',prec:82},
+    {ini:'CM',bg:'#d0f5f1',tc:'#0a8f7e',name:'Carlos Mejía',zone:'Límites',status:'help',prec:55},
+    {ini:'LP',bg:'#fff4d6',tc:'#b37a00',name:'Lucía Paredes',zone:'Derivadas',status:'error',prec:38},
+    {ini:'DR',bg:'#d4f5e8',tc:'#0f8a57',name:'Diego Ríos',zone:'Integrales',status:'ok',prec:76},
+    {ini:'MF',bg:'#fdeaea',tc:'#a13030',name:'María Flores',zone:'Derivadas',status:'error',prec:43},
+  ];
+  var sc={ok:'#1ab87a',help:'#f0a500',error:'#e84c4c'};
+  var sl={ok:'Sin dificultad',help:'Con dudas',error:'Necesita ayuda'};
+  var wrap=document.createElement('div');wrap.style.cssText='display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;';
+  students.forEach(function(s){
+    var card=document.createElement('div');card.style.cssText='background:var(--gray3);border-radius:var(--radius-sm);padding:10px;border-left:3px solid '+sc[s.status]+';';
+    card.innerHTML='<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;"><div class="s-ava" style="background:'+s.bg+';color:'+s.tc+';">'+s.ini+'</div><div><div style="font-size:12px;font-weight:700;">'+s.name+'</div><div style="font-size:11px;color:var(--gray);">'+s.zone+'</div></div></div><div style="font-size:11px;color:'+sc[s.status]+';font-weight:600;margin-bottom:6px;">'+sl[s.status]+'</div><div class="pbar"><div class="pfill" style="width:'+s.prec+'%;background:'+sc[s.status]+';"></div></div><div style="display:flex;justify-content:space-between;margin-top:8px;"><span style="font-size:11px;color:var(--gray);">Precisión: '+s.prec+'%</span><button style="font-size:11px;padding:2px 8px;border:1px solid var(--gray2);border-radius:4px;background:transparent;color:#4f3ff0;cursor:pointer;" onclick="showToast(\'Interviniendo con '+s.name+'...\')">Intervenir</button></div>';
+    wrap.appendChild(card);
+  });
+  el.appendChild(wrap);
+}
+function startVRTimer(){
+  if(vrTimerInt)return;
+  vrTimerInt=setInterval(function(){
+    vrTimerSecs++;
+    var m=Math.floor(vrTimerSecs/60),s=vrTimerSecs%60;
+    var el=document.getElementById('t-vr-time');
+    if(el)el.textContent=(m<10?'0':'')+m+':'+(s<10?'0':'')+s+' transcurrido';
+  },1000);
+}
+
+// ===== UTILS =====
+function showToast(msg){
+  var el=document.getElementById('notif-toast');
+  el.textContent=msg;el.classList.add('show');
+  setTimeout(function(){el.classList.remove('show');},2500);
+}
+
+// ===== INIT =====
+function initApp(){
+  if(role==='student'){
+    navigate('home');
+    setTimeout(function(){initExCanvas();},200);
+  } else {
+    navigate('t-dashboard');
+  }
+}
+</script>
+</body>
+</html>
