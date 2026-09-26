@@ -251,6 +251,38 @@ html,body{height:100%;font-family:var(--font);background:var(--gray3);color:var(
 ::-webkit-scrollbar{width:5px;}
 ::-webkit-scrollbar-track{background:transparent;}
 ::-webkit-scrollbar-thumb{background:var(--gray2);border-radius:99px;}
+
+/* ===== NUEVO: BIG DATA ===== */
+.insight-box{background:linear-gradient(135deg,#1a1640 0%,#252060 100%);border-radius:var(--radius);padding:16px 18px;color:#fff;font-size:13px;line-height:1.7;border:1px solid rgba(79,63,240,.4);}
+.insight-box strong{color:var(--p3);}
+.bd-metric{background:var(--white);border-radius:var(--radius);padding:16px;border:1px solid var(--gray2);text-align:center;}
+.bd-metric .v{font-size:24px;font-weight:700;color:var(--p);font-family:var(--mono);}
+.bd-metric .l{font-size:11px;color:var(--gray);margin-top:4px;}
+.pipeline{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.pipe-node{flex:1;min-width:90px;background:var(--gray3);border:1px solid var(--gray2);border-radius:var(--radius-sm);padding:10px;text-align:center;font-size:11px;}
+.pipe-node .icon{font-size:20px;}
+.pipe-node .t{font-weight:700;margin-top:4px;color:var(--dark);}
+.pipe-node .s{color:var(--gray);margin-top:2px;}
+.pipe-arrow{color:var(--p2);font-size:16px;font-weight:700;}
+.event-log{max-height:220px;overflow-y:auto;font-family:var(--mono);font-size:11px;background:#0a0820;border-radius:var(--radius-sm);padding:12px;color:#c5bffb;}
+.event-log .row{padding:3px 0;border-bottom:1px solid rgba(197,191,251,.08);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.event-log .tag{color:#7c6ff7;}
+.event-log .ts{color:#0fb8a4;}
+
+/* ===== NUEVO: BLOCKCHAIN ===== */
+.chain-wrap{display:flex;flex-direction:column;gap:0;}
+.block{background:var(--white);border:1.5px solid var(--gray2);border-radius:var(--radius);padding:14px 16px;position:relative;}
+.block.valid{border-left:4px solid var(--green);}
+.block.invalid{border-left:4px solid var(--red);background:var(--red2);}
+.block-link{height:20px;width:2px;background:var(--p3);margin:0 auto;}
+.block-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.block-idx{font-family:var(--mono);font-weight:700;font-size:13px;color:var(--p);}
+.block-data{font-size:13px;font-weight:600;color:var(--dark);margin-bottom:6px;}
+.block-hash{font-family:var(--mono);font-size:10px;color:var(--gray);word-break:break-all;line-height:1.5;}
+.block-hash b{color:var(--teal);}
+.chain-status{padding:10px 14px;border-radius:var(--radius-sm);font-size:13px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.chain-status.ok{background:var(--green2);color:#0f6840;}
+.chain-status.bad{background:var(--red2);color:#a13030;}
 </style>
 </head>
 <body>
@@ -327,6 +359,7 @@ html,body{height:100%;font-family:var(--font);background:var(--gray3);color:var(
       <div class="tb-badge"><span class="tb-flame">🔥</span> <span id="streak-count">0</span> días</div>
       <div class="tb-pts" id="top-pts">0 XP</div>
     </div>
+    <div id="chain-indicator" class="gemini-status" style="font-size:11px;background:var(--teal2);color:#0a8f7e;">⛓ 0 bloques</div>
     <div id="gemini-indicator" class="gemini-status gemini-loading" style="font-size:11px;">⚡ Gemini</div>
     <button class="tb-notif" id="notif-btn">🔔</button>
     <div class="tb-ava" id="tb-ava" onclick="navigate('perfil')">?</div>
@@ -477,7 +510,6 @@ html,body{height:100%;font-family:var(--font);background:var(--gray3);color:var(
             <div class="badge badge-live" style="margin-left:auto;"><span class="live-dot"></span>Live</div>
           </div>
 
-          <!-- API Key config inline -->
           <div id="api-config-chat" class="api-config" style="margin:12px;border-radius:var(--radius-sm);">
             <div class="api-config-title">🔑 Configurar API Key de Gemini</div>
             <div style="font-size:12px;color:var(--gray);margin-bottom:8px;">Obtén tu clave gratis en <a href="https://aistudio.google.com" target="_blank" style="color:var(--p);">aistudio.google.com</a></div>
@@ -702,6 +734,88 @@ html,body{height:100%;font-family:var(--font);background:var(--gray3);color:var(
       </div>
     </div>
 
+    <!-- ====== NUEVO: BIG DATA (compartido) ====== -->
+    <div class="screen" id="sc-bigdata">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <div>
+          <div style="font-size:16px;font-weight:700;">Big Data · Analítica de aprendizaje</div>
+          <div style="font-size:13px;color:var(--gray);" id="bd-subtitle">Cada interacción se captura, procesa y analiza en tiempo real</div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <span class="badge badge-live"><span class="live-dot"></span>Ingesta activa</span>
+          <button class="btn btn-outline btn-sm" onclick="clearEvents()">Limpiar datos</button>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:16px;">
+        <div class="card-title">Pipeline de datos</div>
+        <div class="pipeline">
+          <div class="pipe-node"><div class="icon">📱</div><div class="t">Ingesta</div><div class="s"><span id="bd-ingest">0</span> eventos</div></div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-node"><div class="icon">🗄️</div><div class="t">Data Lake</div><div class="s"><span id="bd-lake">0</span> KB</div></div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-node"><div class="icon">⚙️</div><div class="t">Procesado</div><div class="s"><span id="bd-types">0</span> métricas</div></div>
+          <div class="pipe-arrow">→</div>
+          <div class="pipe-node"><div class="icon">🧠</div><div class="t">IA (Gemini)</div><div class="s">insights</div></div>
+        </div>
+      </div>
+
+      <div class="grid-4" style="margin-bottom:16px;" id="bd-metrics"></div>
+
+      <div class="grid-2" style="margin-bottom:16px;">
+        <div class="card">
+          <div class="card-title">Eventos por tipo</div>
+          <div class="bar-group" id="bd-bars"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Actividad por hora</div>
+          <canvas id="bd-canvas" width="420" height="150"></canvas>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+            <div class="card-title" style="margin:0;">Insights con IA (Gemini)</div>
+            <button class="btn btn-primary btn-sm" id="bd-ai-btn" onclick="analyzeBigData()">⚡ Analizar datos</button>
+          </div>
+          <div id="bd-insight"><div style="text-align:center;padding:30px 16px;color:var(--gray);font-size:13px;">Presiona "Analizar datos" para que Gemini interprete tu Big Data y genere recomendaciones.</div></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Flujo de eventos en crudo (Data Lake)</div>
+          <div class="event-log" id="bd-log"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== NUEVO: BLOCKCHAIN (compartido) ====== -->
+    <div class="screen" id="sc-blockchain">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <div>
+          <div style="font-size:16px;font-weight:700;">Blockchain · Credenciales verificables</div>
+          <div style="font-size:13px;color:var(--gray);">Logros y certificados registrados en una cadena inmutable (SHA-256)</div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-outline btn-sm" onclick="verifyAndRender()">Verificar cadena</button>
+          <button class="btn btn-primary btn-sm" onclick="issueCertificate()">⛓ Emitir certificado</button>
+        </div>
+      </div>
+      <div class="grid-4" style="margin-bottom:16px;">
+        <div class="bd-metric"><div class="v" id="bc-count">0</div><div class="l">Bloques</div></div>
+        <div class="bd-metric"><div class="v" id="bc-integrity">–</div><div class="l">Integridad</div></div>
+        <div class="bd-metric"><div class="v" id="bc-last">–</div><div class="l">Último bloque</div></div>
+        <div class="bd-metric"><div class="v" style="font-size:14px;">SHA-256</div><div class="l">Algoritmo</div></div>
+      </div>
+      <div id="bc-status" class="chain-status ok">✓ Cadena íntegra</div>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <div class="card-title" style="margin:0;">Cadena de bloques</div>
+          <button class="btn btn-danger btn-sm" onclick="simulateTamper()">⚠ Simular manipulación</button>
+        </div>
+        <div class="chain-wrap" id="bc-chain"></div>
+      </div>
+    </div>
+
     <!-- ====== TEACHER SCREENS ====== -->
 
     <!-- T: DASHBOARD -->
@@ -822,8 +936,6 @@ html,body{height:100%;font-family:var(--font);background:var(--gray3);color:var(
           </div>
           <div class="card">
             <div class="card-title">⚡ Generador de preguntas con Gemini AI</div>
-
-            <!-- API Key para docente -->
             <div id="api-config-teacher" class="api-config" style="margin-bottom:12px;">
               <div class="api-config-title">🔑 Configurar API Key de Gemini</div>
               <div style="font-size:12px;color:var(--gray);margin-bottom:8px;">Necesaria para generar preguntas con IA.</div>
@@ -832,7 +944,6 @@ html,body{height:100%;font-family:var(--font);background:var(--gray3);color:var(
                 <button class="btn btn-primary btn-sm" onclick="saveApiKey()">Guardar</button>
               </div>
             </div>
-
             <div style="display:flex;flex-direction:column;gap:10px;">
               <select id="eval-curso" style="width:100%;padding:9px 12px;border:1.5px solid var(--gray2);border-radius:var(--radius-sm);font-family:var(--font);font-size:13px;outline:none;">
                 <option>Cálculo I — Derivadas</option><option>Cálculo I — Límites</option>
@@ -943,7 +1054,6 @@ function saveApiKey() {
   GEMINI_API_KEY = key;
   localStorage.setItem('mathai_gemini_key', key);
 
-  // Ocultar paneles de config
   var configChat = document.getElementById('api-config-chat');
   var configTeacher = document.getElementById('api-config-teacher');
   if (configChat) configChat.style.display = 'none';
@@ -952,7 +1062,6 @@ function saveApiKey() {
   updateGeminiStatus(true);
   showToast('✓ API Key guardada correctamente');
 
-  // Actualizar mensaje bienvenida del chat
   var statusText = document.getElementById('chat-status-text');
   if (statusText) statusText.textContent = 'En línea · Gemini 1.5 Flash';
 
@@ -979,6 +1088,120 @@ function updateGeminiStatus(ok) {
 }
 
 // ===================================================
+// BIG DATA — EVENT LAKE (capa de datos)
+// Captura, almacena y procesa cada interacción del usuario.
+// ===================================================
+var EVENTS_KEY = 'mathai_events';
+var eventLake = JSON.parse(localStorage.getItem(EVENTS_KEY) || '[]');
+
+function captureEvent(type, payload) {
+  var ev = {
+    id: 'ev_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+    type: type,
+    user: currentUser.name || 'anon',
+    role: role,
+    ts: Date.now(),
+    hour: new Date().getHours(),
+    payload: payload || {}
+  };
+  eventLake.push(ev);
+  // Mantener el lake acotado (últimos 500 eventos)
+  if (eventLake.length > 500) eventLake = eventLake.slice(-500);
+  localStorage.setItem(EVENTS_KEY, JSON.stringify(eventLake));
+  updateChainIndicator();
+  // Si la pantalla Big Data está visible, refrescar en vivo
+  var sc = document.getElementById('sc-bigdata');
+  if (sc && sc.classList.contains('active')) renderBigData();
+}
+
+function aggregateEvents() {
+  var byType = {}, byHour = new Array(24).fill(0);
+  var correct = 0, wrong = 0, chat = 0;
+  eventLake.forEach(function(e) {
+    byType[e.type] = (byType[e.type] || 0) + 1;
+    byHour[e.hour] = (byHour[e.hour] || 0) + 1;
+    if (e.type === 'exercise_correct') correct++;
+    if (e.type === 'exercise_wrong') wrong++;
+    if (e.type === 'chat_message') chat++;
+  });
+  var totalEx = correct + wrong;
+  return {
+    total: eventLake.length,
+    byType: byType,
+    byHour: byHour,
+    correct: correct,
+    wrong: wrong,
+    chat: chat,
+    accuracy: totalEx ? Math.round(correct / totalEx * 100) : 0,
+    sizeKB: Math.round(JSON.stringify(eventLake).length / 1024 * 10) / 10
+  };
+}
+
+function clearEvents() {
+  eventLake = [];
+  localStorage.setItem(EVENTS_KEY, JSON.stringify(eventLake));
+  renderBigData();
+  showToast('Data Lake reiniciado');
+}
+
+// ===================================================
+// BLOCKCHAIN — cadena de credenciales (SHA-256)
+// ===================================================
+var CHAIN_KEY = 'mathai_chain';
+var blockchain = JSON.parse(localStorage.getItem(CHAIN_KEY) || '[]');
+
+async function sha256(str) {
+  var buf = new TextEncoder().encode(str);
+  var hash = await crypto.subtle.digest('SHA-256', buf);
+  return Array.from(new Uint8Array(hash)).map(function(b) { return b.toString(16).padStart(2, '0'); }).join('');
+}
+
+function blockString(b) {
+  return b.index + '|' + b.ts + '|' + JSON.stringify(b.data) + '|' + b.prev;
+}
+
+async function initChain() {
+  if (blockchain.length === 0) {
+    var genesis = { index: 0, ts: Date.now(), data: { tipo: 'genesis', detalle: 'Bloque génesis MathAI' }, prev: '0'.repeat(64) };
+    genesis.hash = await sha256(blockString(genesis));
+    blockchain.push(genesis);
+    saveChain();
+  }
+  updateChainIndicator();
+}
+
+async function addBlock(data) {
+  var prevBlock = blockchain[blockchain.length - 1];
+  var block = { index: blockchain.length, ts: Date.now(), data: data, prev: prevBlock ? prevBlock.hash : '0'.repeat(64) };
+  block.hash = await sha256(blockString(block));
+  blockchain.push(block);
+  saveChain();
+  updateChainIndicator();
+  var sc = document.getElementById('sc-blockchain');
+  if (sc && sc.classList.contains('active')) verifyAndRender();
+  return block;
+}
+
+function saveChain() {
+  localStorage.setItem(CHAIN_KEY, JSON.stringify(blockchain));
+}
+
+async function verifyChain() {
+  for (var i = 0; i < blockchain.length; i++) {
+    var b = blockchain[i];
+    var recomputed = await sha256(blockString(b));
+    if (recomputed !== b.hash) return { valid: false, at: i };
+    if (i > 0 && b.prev !== blockchain[i - 1].hash) return { valid: false, at: i };
+  }
+  return { valid: true, at: -1 };
+}
+
+function updateChainIndicator() {
+  var el = document.getElementById('chain-indicator');
+  if (el) el.textContent = '⛓ ' + blockchain.length + ' bloques';
+}
+
+// ===================================================
 // LOGIN
 // ===================================================
 function setRole(r, btn) {
@@ -988,7 +1211,6 @@ function setRole(r, btn) {
 }
 
 function socialLogin(provider) {
-  // Para social login usamos el nombre del input si está, o pedimos
   var nameInput = document.getElementById('login-name');
   if (!nameInput.value.trim()) {
     nameInput.value = provider === 'Google' ? 'Usuario Google' : 'Usuario Microsoft';
@@ -1012,7 +1234,6 @@ function doLogin() {
   }
   errorEl.style.display = 'none';
 
-  // Crear usuario con los datos ingresados
   var parts = name.split(' ');
   var initials = parts.map(p => p[0] ? p[0].toUpperCase() : '').join('').slice(0, 2) || 'US';
 
@@ -1031,8 +1252,9 @@ function doLogin() {
   document.getElementById('main-app').style.display = 'flex';
   buildNav();
   initApp();
+  initChain();
+  captureEvent('login', { role: role });
 
-  // Check si ya hay API key guardada
   if (GEMINI_API_KEY) {
     updateGeminiStatus(true);
     var configChat = document.getElementById('api-config-chat');
@@ -1056,7 +1278,6 @@ function logout() {
   document.getElementById('login-name').value = '';
   document.getElementById('login-email').value = '';
   document.getElementById('login-pass').value = '';
-  // Reset teacher screen builds
   resetBuiltFlags();
 }
 
@@ -1085,12 +1306,16 @@ var studentNav = [
   {id:'ejercicios',label:'Ejercicios',icon:'✎',title:'Ejercicios interactivos'},
   {id:'chat-ia',label:'Tutor IA',icon:'🤖',title:'Tutor IA — Gemini'},
   {id:'lab-vr',label:'Lab. Virtual',icon:'◈',title:'Laboratorio VR'},
+  {id:'bigdata',label:'Big Data',icon:'📈',title:'Big Data · Analítica'},
+  {id:'blockchain',label:'Credenciales',icon:'⛓',title:'Blockchain · Credenciales'},
   {id:'recompensas',label:'Logros',icon:'★',title:'Logros y recompensas'},
   {id:'perfil',label:'Perfil',icon:'◉',title:'Mi perfil'},
 ];
 var teacherNav = [
   {id:'t-dashboard',label:'Dashboard',icon:'⊞',title:'Panel del docente'},
   {id:'t-estadisticas',label:'Estadísticas',icon:'↗',title:'Estadísticas'},
+  {id:'bigdata',label:'Big Data',icon:'📈',title:'Big Data · Analítica'},
+  {id:'blockchain',label:'Blockchain',icon:'⛓',title:'Blockchain · Credenciales'},
   {id:'t-material',label:'Material',icon:'📄',title:'Material educativo'},
   {id:'t-evaluaciones',label:'Evaluaciones',icon:'✔',title:'Evaluaciones'},
   {id:'t-vr',label:'Lab. VR',icon:'◈',title:'Sala de control VR'},
@@ -1106,7 +1331,6 @@ function buildNav() {
   });
   document.getElementById('sb-nav').innerHTML = '<div class="sb-section">' + (role === 'student' ? 'Estudiante' : 'Docente') + '</div>' + html;
 
-  // Update user info in sidebar
   document.getElementById('sb-ava').textContent = currentUser.initials;
   document.getElementById('sb-uname').textContent = currentUser.name;
   document.getElementById('tb-ava').textContent = currentUser.initials;
@@ -1123,13 +1347,11 @@ function buildNav() {
 }
 
 function updateUserUI() {
-  // Topbar
   var streakEl = document.getElementById('streak-count');
   if (streakEl) streakEl.textContent = currentUser.streak;
   var xpEl = document.getElementById('top-pts');
   if (xpEl) xpEl.textContent = currentUser.xp.toLocaleString() + ' XP';
 
-  // Hero
   var heroName = document.getElementById('hero-name');
   if (heroName) heroName.textContent = '¡Hola, ' + currentUser.name.split(' ')[0] + '! 👋';
   var heroStreak = document.getElementById('hero-streak');
@@ -1141,7 +1363,6 @@ function updateUserUI() {
   var heroLevel = document.getElementById('hero-level');
   if (heroLevel) heroLevel.textContent = currentUser.level;
 
-  // Perfil
   var profileAva = document.getElementById('profile-ava');
   if (profileAva) profileAva.textContent = currentUser.initials;
   var profileName = document.getElementById('profile-name');
@@ -1159,7 +1380,6 @@ function updateUserUI() {
   var profileStrLab = document.getElementById('profile-streak-label');
   if (profileStrLab) profileStrLab.textContent = '🔥 ' + currentUser.streak + ' días';
 
-  // Met cards
   var metXP = document.getElementById('met-xp');
   if (metXP) metXP.textContent = currentUser.xp.toLocaleString();
   var metPrec = document.getElementById('met-prec');
@@ -1167,7 +1387,6 @@ function updateUserUI() {
   var metStreak = document.getElementById('met-streak');
   if (metStreak) metStreak.textContent = '🔥 ' + currentUser.streak + ' días';
 
-  // Recompensas
   var rwLevel = document.getElementById('rw-level');
   if (rwLevel) rwLevel.textContent = currentUser.level;
   var rwLevelLabel = document.getElementById('rw-level-label');
@@ -1185,7 +1404,6 @@ function updateUserUI() {
   var rwStreak = document.getElementById('rw-streak');
   if (rwStreak) rwStreak.textContent = '🔥' + currentUser.streak;
 
-  // Ranking
   var rankingMeAva = document.getElementById('ranking-me-ava');
   if (rankingMeAva) rankingMeAva.textContent = currentUser.initials;
   var rankingMeName = document.getElementById('ranking-me-name');
@@ -1193,10 +1411,8 @@ function updateUserUI() {
   var rankingMeXP = document.getElementById('ranking-me-xp');
   if (rankingMeXP) rankingMeXP.textContent = currentUser.xp.toLocaleString() + ' XP';
 
-  // Streak days
   buildStreakDays();
 
-  // Chat welcome
   var chatWelcome = document.getElementById('chat-welcome');
   if (chatWelcome && currentUser.name) {
     var firstName = currentUser.name.split(' ')[0];
@@ -1234,6 +1450,8 @@ function navigate(id) {
   var inits = {
     'ejercicios': function() { setTimeout(function() { initExCanvas(); }, 80); },
     'lab-vr': function() { setTimeout(function() { initVRCanvas(); }, 80); },
+    'bigdata': function() { renderBigData(); },
+    'blockchain': function() { verifyAndRender(); },
     't-dashboard': function() { setTimeout(function() { initTeacherDash(); }, 80); },
     't-estadisticas': function() { setTimeout(function() { initTeacherStats(); }, 80); },
     't-material': function() { buildFileList(); },
@@ -1278,6 +1496,8 @@ async function chatSend(txt) {
   ub.textContent = msg;
   container.appendChild(ub);
   if (inp) inp.value = '';
+
+  captureEvent('chat_message', { len: msg.length });
 
   var typing = document.createElement('div');
   typing.className = 'msg-ai';
@@ -1327,6 +1547,7 @@ async function chatSend(txt) {
       .replace(/\n/g, '<br>');
     container.appendChild(ab);
     container.scrollTop = container.scrollHeight;
+    captureEvent('chat_response', { len: respuesta.length });
 
   } catch (error) {
     typing.remove();
@@ -1395,7 +1616,6 @@ async function genAIQuestions() {
     var texto = data.candidates[0].content.parts[0].text;
     var clean = texto.replace(/```json|```/g, '').trim();
 
-    // Extraer JSON si viene con texto alrededor
     var jsonMatch = clean.match(/\{[\s\S]*\}/);
     if (jsonMatch) clean = jsonMatch[0];
 
@@ -1420,6 +1640,7 @@ async function genAIQuestions() {
     note.innerHTML = '⚡ <strong>' + parsed.preguntas.length + ' preguntas generadas</strong> por Gemini AI · ' + curso + ' · ' + nivel;
     el.appendChild(note);
 
+    captureEvent('ai_questions_generated', { curso: curso, nivel: nivel, cantidad: parsed.preguntas.length });
     showToast('✓ ' + parsed.preguntas.length + ' preguntas generadas con Gemini');
 
   } catch (error) {
@@ -1509,13 +1730,19 @@ function checkEx(opt) {
     currentUser.xp += 50;
     currentUser.exercises += 1;
     currentUser.precision = Math.min(100, Math.round((currentUser.precision * (currentUser.exercises - 1) + 100) / currentUser.exercises));
-    if (currentUser.xp >= currentUser.level * 1000) currentUser.level++;
+    var leveledUp = false;
+    if (currentUser.xp >= currentUser.level * 1000) { currentUser.level++; leveledUp = true; }
     updateUserUI();
     showToast('+50 XP ganados! 🎉');
+    captureEvent('exercise_correct', { tema: 'Regla de la cadena', xp: 50 });
+    // Registrar el logro en la blockchain
+    addBlock({ tipo: 'logro', detalle: 'Ejercicio resuelto: Regla de la cadena', xp: currentUser.xp, estudiante: currentUser.name });
+    if (leveledUp) addBlock({ tipo: 'nivel', detalle: 'Alcanzó el nivel ' + currentUser.level, estudiante: currentUser.name });
   } else {
     btns[map[opt]].classList.add('wrong');
     fb.style.display = 'block'; fb.style.background = '#fdeaea'; fb.style.color = '#a13030'; fb.style.border = '1.5px solid #e84c4c';
     fb.innerHTML = '✗ No es correcto. Recuerda multiplicar la derivada de la función externa por la derivada de la función interna. Revisa la pista.';
+    captureEvent('exercise_wrong', { tema: 'Regla de la cadena', opcion: opt });
   }
 }
 
@@ -1581,8 +1808,8 @@ function toggleVRTang(btn) { vrShowTang = !vrShowTang; btn.classList.toggle('btn
 function toggleVRArea(btn) { vrShowArea = !vrShowArea; btn.classList.toggle('btn-primary', vrShowArea); btn.classList.toggle('btn-outline', !vrShowArea); drawVRCanvas(); }
 function vrChallenge(val) {
   var fb = document.getElementById('vr-fb'); fb.style.display = 'block';
-  if (val === 6) { fb.style.background = '#d4f5e8'; fb.style.color = '#0f6840'; fb.style.border = '1.5px solid #1ab87a'; fb.innerHTML = '✓ ¡Correcto! f\'(x)=2x → f\'(3)=6. +30 XP'; showToast('+30 XP 🎯'); currentUser.xp += 30; updateUserUI(); }
-  else { fb.style.background = '#fdeaea'; fb.style.color = '#a13030'; fb.style.border = '1.5px solid #e84c4c'; fb.innerHTML = '✗ Recuerda: f\'(x)=2x, entonces f\'(3)=2×3=?'; }
+  if (val === 6) { fb.style.background = '#d4f5e8'; fb.style.color = '#0f6840'; fb.style.border = '1.5px solid #1ab87a'; fb.innerHTML = '✓ ¡Correcto! f\'(x)=2x → f\'(3)=6. +30 XP'; showToast('+30 XP 🎯'); currentUser.xp += 30; updateUserUI(); captureEvent('vr_challenge_correct', { xp: 30 }); addBlock({ tipo: 'logro', detalle: 'Desafío VR resuelto: f\'(3)=6', xp: currentUser.xp, estudiante: currentUser.name }); }
+  else { fb.style.background = '#fdeaea'; fb.style.color = '#a13030'; fb.style.border = '1.5px solid #e84c4c'; fb.innerHTML = '✗ Recuerda: f\'(x)=2x, entonces f\'(3)=2×3=?'; captureEvent('vr_challenge_wrong', {}); }
 }
 
 // ===================================================
@@ -1792,6 +2019,210 @@ function startVRTimer() {
     var el = document.getElementById('t-vr-time');
     if (el) el.textContent = (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s + ' transcurrido';
   }, 1000);
+}
+
+// ===================================================
+// NUEVO: RENDER BIG DATA
+// ===================================================
+var bdTypeLabels = {
+  login: 'Inicios de sesión',
+  exercise_correct: 'Ejercicios correctos',
+  exercise_wrong: 'Ejercicios erróneos',
+  chat_message: 'Mensajes al tutor',
+  chat_response: 'Respuestas de IA',
+  ai_questions_generated: 'Preguntas IA generadas',
+  vr_challenge_correct: 'Desafíos VR correctos',
+  vr_challenge_wrong: 'Desafíos VR erróneos',
+  certificate_issued: 'Certificados emitidos'
+};
+
+function renderBigData() {
+  var agg = aggregateEvents();
+  var sub = document.getElementById('bd-subtitle');
+  if (sub) sub.textContent = role === 'teacher' ? 'Vista agregada de todas las interacciones del curso' : 'Cada interacción tuya se captura, procesa y analiza en tiempo real';
+
+  var ing = document.getElementById('bd-ingest'); if (ing) ing.textContent = agg.total;
+  var lake = document.getElementById('bd-lake'); if (lake) lake.textContent = agg.sizeKB;
+  var types = document.getElementById('bd-types'); if (types) types.textContent = Object.keys(agg.byType).length;
+
+  var metWrap = document.getElementById('bd-metrics');
+  if (metWrap) {
+    metWrap.innerHTML =
+      '<div class="bd-metric"><div class="v">' + agg.total + '</div><div class="l">Eventos totales</div></div>' +
+      '<div class="bd-metric"><div class="v">' + agg.accuracy + '%</div><div class="l">Precisión (datos)</div></div>' +
+      '<div class="bd-metric"><div class="v">' + agg.chat + '</div><div class="l">Consultas al tutor</div></div>' +
+      '<div class="bd-metric"><div class="v">' + (agg.correct + agg.wrong) + '</div><div class="l">Intentos de ejercicio</div></div>';
+  }
+
+  var bars = document.getElementById('bd-bars');
+  if (bars) {
+    bars.innerHTML = '';
+    var entries = Object.keys(agg.byType).map(function(k) { return [k, agg.byType[k]]; }).sort(function(a, b) { return b[1] - a[1]; });
+    var maxV = entries.length ? entries[0][1] : 1;
+    if (entries.length === 0) {
+      bars.innerHTML = '<div style="font-size:13px;color:var(--gray);padding:12px;">Aún no hay eventos. Interactúa con la app (resuelve ejercicios, usa el tutor) para generar datos.</div>';
+    }
+    var palette = ['#4f3ff0', '#0fb8a4', '#f0a500', '#e84c4c', '#1ab87a', '#7c6ff7', '#b37a00'];
+    entries.forEach(function(e, i) {
+      var label = bdTypeLabels[e[0]] || e[0];
+      var row = document.createElement('div'); row.className = 'bar-row';
+      row.innerHTML = '<span class="bar-label">' + label + '</span><div class="bar-track"><div class="bar-fill" style="width:' + Math.round(e[1] / maxV * 100) + '%;background:' + palette[i % palette.length] + '"></div></div><span class="bar-val">' + e[1] + '</span>';
+      bars.appendChild(row);
+    });
+  }
+
+  drawBdCanvas(agg.byHour);
+
+  var log = document.getElementById('bd-log');
+  if (log) {
+    var recent = eventLake.slice(-40).reverse();
+    if (recent.length === 0) { log.innerHTML = '<div style="color:#6b6b8a;">// data lake vacío</div>'; }
+    else {
+      log.innerHTML = recent.map(function(e) {
+        var t = new Date(e.ts);
+        var hh = ('0' + t.getHours()).slice(-2) + ':' + ('0' + t.getMinutes()).slice(-2) + ':' + ('0' + t.getSeconds()).slice(-2);
+        return '<div class="row"><span class="ts">' + hh + '</span> <span class="tag">[' + e.type + ']</span> ' + JSON.stringify(e.payload) + '</div>';
+      }).join('');
+    }
+  }
+}
+
+function drawBdCanvas(byHour) {
+  var c = document.getElementById('bd-canvas'); if (!c) return;
+  var ctx = c.getContext('2d'), w = c.width, h = c.height;
+  ctx.clearRect(0, 0, w, h);
+  var maxV = Math.max.apply(null, byHour.concat([1]));
+  var pad = 24, bw = (w - pad * 2) / 24;
+  ctx.strokeStyle = '#e8e7f4'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(pad, h - 20); ctx.lineTo(w - pad, h - 20); ctx.stroke();
+  for (var i = 0; i < 24; i++) {
+    var val = byHour[i] || 0;
+    var bH = Math.round(val / maxV * (h - 40));
+    var bx = pad + i * bw;
+    ctx.fillStyle = val ? '#4f3ff0' : '#e8e7f4';
+    ctx.fillRect(bx + 1, h - 20 - bH, bw - 2, bH);
+    if (i % 4 === 0) {
+      ctx.fillStyle = '#6b6b8a'; ctx.font = '9px Sora,sans-serif'; ctx.textAlign = 'center';
+      ctx.fillText(i + 'h', bx + bw / 2, h - 6);
+    }
+  }
+}
+
+async function analyzeBigData() {
+  var box = document.getElementById('bd-insight');
+  if (!GEMINI_API_KEY) {
+    showToast('⚠️ Configura tu API Key de Gemini (en Tutor IA) primero');
+    box.innerHTML = '<div style="font-size:13px;color:var(--red);padding:16px;background:var(--red2);border-radius:var(--radius-sm);">Necesitas configurar la API Key de Gemini para generar insights. Ve a "Tutor IA" y guárdala.</div>';
+    return;
+  }
+  var agg = aggregateEvents();
+  if (agg.total === 0) { showToast('No hay datos para analizar todavía'); return; }
+
+  var btn = document.getElementById('bd-ai-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Analizando...'; }
+  box.innerHTML = '<div style="text-align:center;padding:24px;color:var(--p);"><div class="typing-dots" style="justify-content:center;"><span></span><span></span><span></span></div><div style="margin-top:10px;font-size:13px;">Gemini está analizando tu Big Data...</div></div>';
+
+  var resumen = 'Datos de aprendizaje (agregados):\n' +
+    '- Eventos totales: ' + agg.total + '\n' +
+    '- Ejercicios correctos: ' + agg.correct + '\n' +
+    '- Ejercicios erróneos: ' + agg.wrong + '\n' +
+    '- Precisión: ' + agg.accuracy + '%\n' +
+    '- Consultas al tutor IA: ' + agg.chat + '\n' +
+    '- Distribución por tipo: ' + JSON.stringify(agg.byType) + '\n' +
+    '- Actividad por hora del día: ' + JSON.stringify(agg.byHour);
+
+  var prompt = (role === 'teacher'
+      ? 'Eres un analista de datos educativos. A partir de estos datos agregados del curso, '
+      : 'Eres un mentor de aprendizaje. A partir de estos datos de un estudiante, ') +
+    'genera un análisis breve en español con: 1) un diagnóstico en 2 frases, 2) tres recomendaciones concretas con viñetas usando **negritas** para los títulos, 3) una frase motivadora final. Máximo 180 palabras.\n\n' + resumen;
+
+  try {
+    var response = await fetch(getGeminiUrl(), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.7, maxOutputTokens: 512 }
+      })
+    });
+    if (!response.ok) { var ed = await response.json(); throw new Error(ed.error ? ed.error.message : 'Error ' + response.status); }
+    var data = await response.json();
+    var texto = data.candidates[0].content.parts[0].text;
+    var htmlTxt = texto.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n\n/g, '<br><br>').replace(/\n/g, '<br>');
+    box.innerHTML = '<div class="insight-box">' + htmlTxt + '</div>';
+    captureEvent('bigdata_analyzed', { total: agg.total });
+  } catch (error) {
+    box.innerHTML = '<div style="font-size:13px;color:var(--red);padding:16px;background:var(--red2);border-radius:var(--radius-sm);">⚠️ ' + (error.message || 'Error') + '</div>';
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '⚡ Analizar datos'; }
+  }
+}
+
+// ===================================================
+// NUEVO: RENDER BLOCKCHAIN
+// ===================================================
+async function verifyAndRender() {
+  var result = await verifyChain();
+  var statusEl = document.getElementById('bc-status');
+  if (statusEl) {
+    if (result.valid) { statusEl.className = 'chain-status ok'; statusEl.innerHTML = '✓ Cadena íntegra — todos los bloques verificados con SHA-256'; }
+    else { statusEl.className = 'chain-status bad'; statusEl.innerHTML = '✗ Cadena comprometida — el bloque #' + result.at + ' fue alterado'; }
+  }
+  var cnt = document.getElementById('bc-count'); if (cnt) cnt.textContent = blockchain.length;
+  var integ = document.getElementById('bc-integrity'); if (integ) { integ.textContent = result.valid ? '✓' : '✗'; integ.style.color = result.valid ? 'var(--green)' : 'var(--red)'; }
+  var last = document.getElementById('bc-last'); if (last) last.textContent = '#' + (blockchain.length - 1);
+
+  var chainEl = document.getElementById('bc-chain');
+  if (!chainEl) return;
+  chainEl.innerHTML = '';
+  // Recalcular validez por bloque para marcar visualmente
+  var validFlags = [];
+  for (var i = 0; i < blockchain.length; i++) {
+    var b = blockchain[i];
+    var rec = await sha256(blockString(b));
+    var ok = (rec === b.hash) && (i === 0 || b.prev === blockchain[i - 1].hash);
+    validFlags.push(ok);
+  }
+  blockchain.slice().reverse().forEach(function(b, ri) {
+    var i = blockchain.length - 1 - ri;
+    if (ri > 0) { var link = document.createElement('div'); link.className = 'block-link'; chainEl.appendChild(link); }
+    var div = document.createElement('div');
+    div.className = 'block ' + (validFlags[i] ? 'valid' : 'invalid');
+    var fecha = new Date(b.ts).toLocaleString('es-PE');
+    var detalle = b.data.detalle || b.data.tipo || 'bloque';
+    var tag = b.data.tipo || 'dato';
+    div.innerHTML =
+      '<div class="block-head"><span class="block-idx">Bloque #' + b.index + '</span><span class="badge ' + (tag === 'genesis' ? 'badge-a' : tag === 'certificado' ? 'badge-g' : tag === 'nivel' ? 'badge-p' : 'badge-t') + '">' + tag + '</span></div>' +
+      '<div class="block-data">' + detalle + (b.data.estudiante ? ' · ' + b.data.estudiante : '') + '</div>' +
+      '<div style="font-size:11px;color:var(--gray);margin-bottom:6px;">' + fecha + (typeof b.data.xp !== 'undefined' ? ' · XP: ' + b.data.xp : '') + '</div>' +
+      '<div class="block-hash">hash: <b>' + b.hash + '</b><br>prev: ' + b.prev + '</div>';
+    chainEl.appendChild(div);
+  });
+}
+
+async function issueCertificate() {
+  if (!currentUser.name) { showToast('Inicia sesión primero'); return; }
+  await addBlock({
+    tipo: 'certificado',
+    detalle: 'Certificado de progreso emitido',
+    estudiante: currentUser.name,
+    nivel: currentUser.level,
+    xp: currentUser.xp,
+    precision: currentUser.precision + '%'
+  });
+  captureEvent('certificate_issued', { nivel: currentUser.level });
+  showToast('⛓ Certificado registrado en la blockchain');
+  verifyAndRender();
+}
+
+function simulateTamper() {
+  if (blockchain.length < 2) { showToast('Necesitas más bloques. Resuelve un ejercicio o emite un certificado.'); return; }
+  // Alterar los datos de un bloque intermedio SIN recalcular el hash -> rompe la cadena
+  var idx = 1;
+  blockchain[idx].data = Object.assign({}, blockchain[idx].data, { detalle: '⚠ DATO ALTERADO (fraude)', xp: 999999 });
+  saveChain();
+  showToast('Se alteró el bloque #' + idx + ' — verifica la integridad');
+  verifyAndRender();
 }
 
 // ===================================================
